@@ -16,41 +16,50 @@ function taxonomy_menu_help($section) {
  *
  * Most of the heavy lifting of the module is done here.
  */
-function taxonomy_menu_menu() {
+function taxonomy_menu_menu($may_cache) {
   $items = array();
 
-  $access = user_access('access content');
-  $items[] = array('path' => 'taxonomy_menu', 'title' => t('Taxonomy'),
-    'callback' => 'taxonomy_menu_page', 'access' => $access,
-    'type' => MENU_CALLBACK);
-  
-  foreach (taxonomy_get_vocabularies() as $vocabulary) {
-    if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
-      $path = 'taxonomy_menu/'. $vocabulary->vid;
-      $items[] = array('path' => $path, 'title' => t($vocabulary->name),
+  if ($may_cache) {
+    $access = user_access('access content');
+
+    foreach (taxonomy_get_vocabularies() as $vocabulary) {
+      if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
+        $path = 'taxonomy_menu/'. $vocabulary->vid;
+        $items[] = array('path' => $path, 'title' => t($vocabulary->name),
+          'callback' => 'taxonomy_menu_page', 'access' => $access,
           'weight' => $vocabulary->weight);
 
-      $tree = taxonomy_get_tree($vocabulary->vid);
-      $old_depth = -1;
-      $old_path = $path;
-      
-      foreach ($tree as $term) {
-        if ($term->depth <= $old_depth) {
-          $slashes_to_remove = $old_depth - $term->depth + 1;
-          for ($i = 0; $i < $slashes_to_remove; $i++) {
-            $old_path = substr($old_path, 0, strrpos($old_path, '/'));
-          }
-        }
-        $path = $old_path .'/'. $term->tid;
-        $old_depth = $term->depth;
+        $tree = taxonomy_get_tree($vocabulary->vid);
+        $old_depth = -1;
         $old_path = $path;
-        $items[] = array('path' => $path, 'title' => t($term->name),
-          'weight' => $term->weight);
+
+        foreach ($tree as $term) {
+          if ($term->depth <= $old_depth) {
+            $slashes_to_remove = $old_depth - $term->depth + 1;
+            for ($i = 0; $i < $slashes_to_remove; $i++) {
+              $old_path = substr($old_path, 0, strrpos($old_path, '/'));
+            }
+          }
+          $path = $old_path .'/'. $term->tid;
+          $old_depth = $term->depth;
+          $old_path = $path;
+          $items[] = array('path' => $path, 'title' => t($term->name),
+            'weight' => $term->weight);
+        }
       }
     }
   }
 
   return $items;
+}
+
+/**
+ * Implementation of hook_taxonomy().
+ *
+ * Invalidates the menu cache on taxonomy changes.
+ */
+function taxonomy_menu_taxonomy() {
+  menu_rebuild();
 }
 
 /**
@@ -62,7 +71,7 @@ function taxonomy_menu_settings() {
   foreach (taxonomy_get_vocabularies() as $vocabulary) {
     $form .= form_checkbox(t('Show "%vocab" in menu', array('%vocab' => t($vocabulary->name))), 'taxonomy_menu_show_' . $vocabulary->vid, 1, variable_get('taxonomy_menu_show_' . $vocabulary->vid, 1));
   }
-  
+
   return $form;
 }
 
@@ -72,13 +81,28 @@ function taxonomy_menu_settings() {
 function taxonomy_menu_page() {
   if (arg(2)) {
     $arguments = explode('/', $_GET['q']);
-    $main_tid = check_query(array_pop($arguments));
+    $main_tid = db_escape_string(array_pop($arguments));
+    
+    drupal_set_html_head('<link rel="alternate" type="application/rss+xml" title="RSS" href="'. url('taxonomy/term/'. $main_tid .'/'. (variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0) .'/feed') .'" />');
+    
+    $result = taxonomy_select_nodes(array($main_tid), 'or', variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0);
   }
   else {
-    $main_tid = 0;
+    // If no arg(2), we're looking at just the vid. If display_descendants
+    // is on, grab all terms regardless of depth. If off, grab depth 0 terms.
+    $tree = taxonomy_get_tree(arg(1));
+    $descendants = variable_get('taxonomy_menu_display_descendants', 1);
+    foreach ($tree as $term) {
+      if ($descendants || $term->depth == 0) {
+        $tids[] = $term->tid;
+      }
+    }
+    
+    // The requested terms have already been determined, so don't request
+    // descendants here.
+    $result = taxonomy_select_nodes($tids, 'or', 0);
   }
-
-  $result = taxonomy_select_nodes(array($main_tid), 'or', variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0);
+  
   print theme('page', taxonomy_render_nodes($result));
 }
 
@@ -95,11 +119,11 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
         foreach (taxonomy_get_vocabularies() as $vocabulary) {
           if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
             $path = 'taxonomy_menu/' . $vocabulary->vid;
-      
+
             $tree = taxonomy_get_tree($vocabulary->vid);
             $old_depth = -1;
             $old_path = $path;
-            
+
             foreach ($tree as $term) {
               if ($term->depth <= $old_depth) {
                 $slashes_to_remove = $old_depth - $term->depth + 1;
