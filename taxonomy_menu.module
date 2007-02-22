@@ -11,14 +11,11 @@ function taxonomy_menu_help($section) {
       $output .= '<p>'. t('The taxonomy menu administration interface allows taxonomy terms to be enabled to show in the navigation menu.  You can also select whether a term\'s descendents subterms are displayed.') .'</p>';
       $output .= t('<p>You can</p>
 <ul>
-<li>view a list of taxonomies in <a href="%admin-taxonomy">administer &gt;&gt; taxonomy</a>.</li>
-<li>create a new vocabulary at <a href="%admin-taxonomy-add-vocabulary">administer &gt;&gt; taxonomy &gt;&gt; add vocabulary</a>.</li>
-<li>administer taxonomy_menu settings by going to <a href="%admin-settings-taxonomy_menu">administer &gt;&gt; settings &gt;&gt; taxonomy menu</a>.</li>
-</ul>', array('%admin-taxonomy' => url('admin/taxonomy'), '%admin-taxonomy-add-vocabulary' => url('admin/taxonomy/add/vocabulary'), '%admin-settings-taxonomy_menu' => url('admin/settings/taxonomy_menu')));
-      $output .= '<p>'. t('For more information please read the configuration and customization handbook <a href="%taxonomy_menu">Taxonomy menu page</a>.', array('%taxonomy_menu' => 'http://www.drupal.org/handbook/modules/taxonomy_menu/')) .'</p>';
+<li>view a list of taxonomies in <a href="@admin-taxonomy">Administer &gt;&gt; Content management &gt;&gt; Categories</a>.</li>
+<li>create a new vocabulary at <a href="@admin-taxonomy-add-vocabulary">Administer &gt;&gt; Content management &gt;&gt; Categories &gt;&gt; Add vocabulary</a>.</li>
+</ul>', array('@admin-taxonomy' => url('admin/content/taxonomy'), '@admin-taxonomy-add-vocabulary' => url('admin/content/taxonomy/add/vocabulary')));
+      $output .= '<p>'. t('For more information please read the configuration and customization handbook <a href="@taxonomy_menu">Taxonomy menu page</a>.', array('@taxonomy_menu' => 'http://www.drupal.org/handbook/modules/taxonomy_menu/')) .'</p>';
       return $output;
-    case 'admin/modules#description':
-      return t('Adds links to taxonomy terms to the global navigation menu.');
   }
 }
 
@@ -31,6 +28,16 @@ function taxonomy_menu_menu($may_cache) {
   $items = array();
 
   if ($may_cache) {
+   $items[]= array (
+      'path' => 'admin/settings/taxonomy_menu',
+      'title' => t('Taxonomy Menu settings'),
+      'callback' => 'drupal_get_form',
+      'callback arguments' => array('taxonomy_menu_admin_settings'),
+      'access' => user_access('administer site configuration'),
+      'description' => t('Global configuration of taxonomy menu functionality.'),
+      'type' => MENU_NORMAL_ITEM,
+    );
+
     $access = user_access('access content');
 
     foreach (taxonomy_get_vocabularies() as $vocabulary) {
@@ -74,9 +81,9 @@ function taxonomy_menu_taxonomy() {
 }
 
 /**
- * Implementation of hook_settings().
+ * Menu callback; manage settings for taxonomy menu.
  */
-function taxonomy_menu_settings() {
+function taxonomy_menu_admin_settings() {
   $form['taxonomy_menu_display_descendants'] = array(
     '#type' => 'checkbox',
     '#title' => t('Display descendants'),
@@ -91,10 +98,10 @@ function taxonomy_menu_settings() {
       '#title' => t('Show "%vocab" in menu', array('%vocab' => t($vocabulary->name))),
       '#return_value' => 1,
       '#default_value' => variable_get('taxonomy_menu_show_' . $vocabulary->vid, 1),
-  );
+    );
   }
 
-  return $form;
+  return system_settings_form($form);
 }
 
 /**
@@ -106,8 +113,7 @@ function taxonomy_menu_page() {
     $main_tid = db_escape_string(array_pop($arguments));
 
     $feed = url('taxonomy/term/'. $main_tid .'/'. (variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0) .'/feed');
-
-    drupal_set_html_head('<link rel="alternate" type="application/rss+xml" title="RSS" href="'. $feed .'" />');
+    drupal_add_feed($feed);
 
     $result = taxonomy_select_nodes(array($main_tid), 'or', variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0);
   }
@@ -127,10 +133,7 @@ function taxonomy_menu_page() {
     $result = taxonomy_select_nodes($tids, 'or', 0);
   }
 
-  $output = taxonomy_render_nodes($result);
-  $output .= theme('feed_icon', $feed);
-
-  return $output;
+  return taxonomy_render_nodes($result);
 }
 
 /**
@@ -173,5 +176,3 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
       break;
   }
 }
-
-?>
