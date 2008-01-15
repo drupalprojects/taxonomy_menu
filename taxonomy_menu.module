@@ -1,5 +1,11 @@
 <?php
-// $Id$
+/**
+ * $Id$
+ * @file tmp.module
+ * @author Jonathan Chaffer   <jchaffer@structureinteractive.com>
+ * @author Bruno Massa        <http://drupal.org/user/67164>
+ * It Generates menu links for all taxonomy terms
+ */
 
 /**
  * Implementation of hook_help().
