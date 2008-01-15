@@ -7,6 +7,12 @@
  * It Generates menu links for all taxonomy terms
  */
 
+// Some "magic numbers" mastered
+define('TAXONOMY_MENU_NONE',        0);
+define('TAXONOMY_MENU_NORMAL',      1);
+define('TAXONOMY_MENU_VIEW',        2);
+define('TAXONOMY_MENU_DEFAULT_TAX', 3);
+
 /**
  * Admin area. Configure the module, setting which
  * vocabularies will be converted into menus items
@@ -84,7 +90,7 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
     // Check if at least one vocabulary is revelevant
     // for us, being a menu
     foreach ($terms as $term) {
-      if (variable_get('taxonomy_menu_show_'. $term->vid, taxonomy_menu_NONE)) {
+      if (variable_get('taxonomy_menu_show_'. $term->vid, TAXONOMY_MENU_NONE)) {
         $vocabs[$term->vid][] = $term->tid;
       }
     }

@@ -16,8 +16,8 @@
  */
 function _taxonomy_menu_admin() {
   $options = array(
-    taxonomy_menu_NONE    => t('No'),
-    taxonomy_menu_NORMAL  => t('Normal')
+    TAXONOMY_MENU_NONE    => t('No'),
+    TAXONOMY_MENU_NORMAL  => t('Normal')
   );
 
   // If the Views module is enabled, add some special
@@ -27,7 +27,7 @@ function _taxonomy_menu_admin() {
     require_once(drupal_get_path('module', 'views') .'/views_cache.inc');
 
     // Add a new options on Categories
-    $options[taxonomy_menu_VIEW] = t('Views');
+    $options[TAXONOMY_MENU_VIEW] = t('Views');
 
     // Get the list of User generated views
     $views = db_query("SELECT * FROM {view_view}");
@@ -49,7 +49,7 @@ function _taxonomy_menu_admin() {
       '#type'           => 'fieldset'
     );
     $form[$vocab->vid]['taxonomy_menu_show_'. $vocab->vid] = array(
-      '#default_value'  => variable_get('taxonomy_menu_show_'. $vocab->vid, taxonomy_menu_NONE),
+      '#default_value'  => variable_get('taxonomy_menu_show_'. $vocab->vid, TAXONOMY_MENU_NONE),
       '#options'        => $options,
       '#title'          => t('Show this category in menu'),
       '#type'           => 'radios'
@@ -178,7 +178,7 @@ function _taxonomy_menu_page() {
 
     // Depending on what Output technique is used,
     // show the nodes' list
-    if (variable_get('taxonomy_menu_show_'. $vid, taxonomy_menu_NORMAL) == taxonomy_menu_NORMAL) {
+    if (variable_get('taxonomy_menu_show_'. $vid, TAXONOMY_MENU_NORMAL) == TAXONOMY_MENU_NORMAL) {
       $tid = explode('/', $_GET['q']);
       $tid = db_escape_string(array_pop($tid));
 
@@ -192,7 +192,7 @@ function _taxonomy_menu_page() {
 
       $output = taxonomy_render_nodes($result);
     }
-    elseif (variable_get('taxonomy_menu_show_'. $vid, taxonomy_menu_NORMAL) == taxonomy_menu_VIEW) {
+    elseif (variable_get('taxonomy_menu_show_'. $vid, TAXONOMY_MENU_NORMAL) == TAXONOMY_MENU_VIEW) {
       // Get the last page argument
       $tid = explode('/', $_GET['q']);
       $tid = db_escape_string(array_pop($tid));
@@ -202,7 +202,7 @@ function _taxonomy_menu_page() {
         views_get_view(variable_get('taxonomy_menu_show_views_'. arg(2), '')),
         array($tid), FALSE, NULL);
     }
-    elseif (variable_get('taxonomy_menu_show_'. $vid, taxonomy_menu_NORMAL) == taxonomy_menu_DEFAULT_TAX) {
+    elseif (variable_get('taxonomy_menu_show_'. $vid, TAXONOMY_MENU_NORMAL) == taxonomy_menu_DEFAULT_TAX) {
 
     }
   }
