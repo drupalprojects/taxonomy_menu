@@ -1,4 +1,5 @@
 ; $Id$
-name = Taxonomy Menu
-description = Adds links to taxonomy terms to the global navigation menu.
-dependencies = taxonomy
+core          = "5.x"
+name          = "Taxonomy Menu"
+dependencies  = taxonomy
+description   = "Adds links to taxonomy terms to the global navigation menu."
