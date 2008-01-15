@@ -96,37 +96,36 @@ function __taxonomy_menu_page() {
  * This hook enables the menu to be displayed in context during node views.
  */
 function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
-  switch ($op) {
-    case 'view':
-      if ($a4 == TRUE) {
-        // The node is being displayed on its own page.
-        foreach (taxonomy_get_vocabularies() as $vocabulary) {
-          if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
-            $path = 'taxonomy_menu/' . $vocabulary->vid;
+  static $vocabs = array();
+  // First check if the node has a relevant category.s
+  if (empty($vocabs) and is_array($vocabs)) {
 
-            $tree = taxonomy_get_tree($vocabulary->vid);
-            $old_depth = -1;
-            $old_path = $path;
+    // The node should have taxonomy terms
+    if (!$terms = taxonomy_node_get_terms($node->nid)) {
+      return;
+    }
 
-            foreach ($tree as $term) {
-              if ($term->depth <= $old_depth) {
-                $slashes_to_remove = $old_depth - $term->depth + 1;
-                for ($i = 0; $i < $slashes_to_remove; $i++) {
-                  $old_path = substr($old_path, 0, strrpos($old_path, "/"));
-                }
-              }
-              $path = $old_path .'/'. $term->tid;
-              $old_depth = $term->depth;
-              $old_path = $path;
-              if (in_array($term->tid, array_keys(taxonomy_node_get_terms($node->nid)))) {
-                menu_set_location(array(array('path' => $path, 'title' => t($term->name)), array('path' => 'node/'. $node->nid, 'title' => $node->title)));
-                // Quit after the first match.
-                return;
-              }
-            }
-          }
-        }
+    // Check if at least one vocabulary is revelevant
+    // for us, being a menu
+    foreach ($terms as $term) {
+      if (variable_get('taxonomy_menu_show_'. $term->vid, taxonomy_menu_NONE)) {
+        $vocabs[$term->vid][] = $term->tid;
       }
-      break;
+    }
+
+    // If none of the terms are tracked by this module,
+    // forget it
+    if (empty($vocabs)) {
+      $vocabs = FALSE;
+      return;
+    }
+  }
+
+  if ($op == 'view' and $a4 == TRUE) {
+    require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.inc');
+    _taxonomy_menu_node_view($node, $vocabs);
+  }
+  elseif ($op == 'update' or $op == 'insert') {
+      menu_rebuild();
   }
 }
