@@ -1,5 +1,20 @@
+TAXONOMY MENU
+
+
+INTRO
+=====
+
 This module adds links to taxonomy terms to the global navigation menu.
-The new integrated administration menu in Drupal 4.3 allows modules to add
-their own links to the global heirarchical menu, and this module takes
-advantage of this in order to display a taxonomy navigation menu in a
-style consistent with the rest of the Drupal site navigation.
+
+
+INSTALLATION
+============
+
+1) Place this module directory into your Drupal modules directory.
+
+2) Enable the taxonomy_menu module in Drupal, at:
+   administration -> site configuration -> modules (admin/build/modules)
+
+3) Choose which vocabularies to appear in the menu at:
+   administration -> site configuration -> modules -> taxonomy menu
+   (admin/settings/taxonomy_menu)
