@@ -1,11 +1,23 @@
 <?php
 /**
  * $Id$
- * @file tmp.module
+ * @file taxonomy_menu.module
  * @author Jonathan Chaffer   <jchaffer@structureinteractive.com>
  * @author Bruno Massa        <http://drupal.org/user/67164>
  * It Generates menu links for all taxonomy terms
  */
+
+/**
+ * Admin area. Configure the module, setting which
+ * vocabularies will be converted into menus items
+ *
+ * @return
+ *   Array. The form fields.
+ */
+function __taxonomy_menu_admin() {
+  require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.inc');
+  return _taxonomy_menu_admin();
+}
 
 /**
  * Implementation of hook_help().
