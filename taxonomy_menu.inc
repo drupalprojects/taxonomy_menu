@@ -169,3 +169,44 @@ function _taxonomy_menu_menu() {
   return $items;
 }
 
+/**
+ * Page callback that renders a node listing for the selected term.
+ */
+function _taxonomy_menu_page() {
+  // Check if the Vocabulary ID is set
+  if ($vid = arg(2)) {
+
+    // Depending on what Output technique is used,
+    // show the nodes' list
+    if (variable_get('taxonomy_menu_show_'. $vid, taxonomy_menu_NORMAL) == taxonomy_menu_NORMAL) {
+      $tid = explode('/', $_GET['q']);
+      $tid = db_escape_string(array_pop($tid));
+
+      $feed = url('taxonomy/term/'. $tid .'/'.
+        (variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0) .
+        '/feed');
+      drupal_add_feed($feed);
+
+      $result = taxonomy_select_nodes(array($tid), 'or',
+        variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0);
+
+      $output = taxonomy_render_nodes($result);
+    }
+    elseif (variable_get('taxonomy_menu_show_'. $vid, taxonomy_menu_NORMAL) == taxonomy_menu_VIEW) {
+      // Get the last page argument
+      $tid = explode('/', $_GET['q']);
+      $tid = db_escape_string(array_pop($tid));
+
+      // Embed the views output into the page
+      $output = views_build_view('embed',
+        views_get_view(variable_get('taxonomy_menu_show_views_'. arg(2), '')),
+        array($tid), FALSE, NULL);
+    }
+    elseif (variable_get('taxonomy_menu_show_'. $vid, taxonomy_menu_NORMAL) == taxonomy_menu_DEFAULT_TAX) {
+
+    }
+  }
+
+  // If no content found, return a "error" message
+  return empty($output) ? t('No content for this category.') : $output;
+}
