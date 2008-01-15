@@ -98,3 +98,74 @@ function _taxonomy_menu_admin() {
 
   return $form;
 }
+
+/**
+ * Implementation of hook_menu().
+ *
+ * Its the main function for this module.
+ */
+function _taxonomy_menu_menu() {
+  $items['admin/settings/taxonomy_menu'] = array(
+    'access'              => user_access('administer site configuration'),
+    'callback'            => 'drupal_get_form',
+    'callback arguments'  => array('__taxonomy_menu_admin'),
+    'file'                => 'taxonomy_menu.inc',
+    'description'         => t('Global configuration of taxonomy menu functionality.'),
+    'path'                => 'admin/settings/taxonomy_menu',
+    'title'               => t('Taxonomy Menu Plus settings'),
+    'type'                => MENU_NORMAL_ITEM
+  );
+
+  $access = user_access('access content');
+
+  foreach (taxonomy_get_vocabularies() as $vocabulary) {
+    if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
+      $path =  variable_get('taxonomy_menu_display_page', 'category') .'/'. $vocabulary->vid;
+      $items[$path] = array(
+        'access'          => $access,
+        'callback'        => '__taxonomy_menu_page',
+        'file'            => 'taxonomy_menu.inc',
+        'page callback'   => '__taxonomy_menu_page',
+        'path'            => $path,
+        'title'           => t($vocabulary->name),
+        'weight'          => $vocabulary->weight
+      );
+
+      $tree = taxonomy_get_tree($vocabulary->vid);
+      $old_depth = -1;
+      $old_path = $path;
+
+      foreach ($tree as $term) {
+        if ($term->depth <= $old_depth) {
+          $slashes_to_remove = $old_depth - $term->depth + 1;
+          for ($i = 0; $i < $slashes_to_remove; $i++) {
+            $old_path = substr($old_path, 0, strrpos($old_path, '/'));
+          }
+        }
+        $path       = $old_path .'/'. $term->tid;
+        $old_depth  = $term->depth;
+        $old_path   = $path;
+
+       if (variable_get('taxonomy_menu_hide_empty', FALSE) == FALSE or $num != 0) {
+          $name = t($term->name);
+          if (variable_get('taxonomy_menu_display_num', FALSE) == TRUE) {
+            $num = taxonomy_term_count_nodes($term->tid);
+            $name .= ' ('. $num .')';
+          }
+          $items[$path] = array(
+            'access'          => $access,
+            'callback'        => '__taxonomy_menu_page',
+            'description'     => t($term->description),
+            'file'            => 'taxonomy_menu.inc',
+            'page callback'   => '__taxonomy_menu_page',
+            'path'            => $path,
+            'title'           => $name,
+            'weight'          => $term->weight
+          );
+        }
+      }
+    }
+  }
+  return $items;
+}
+

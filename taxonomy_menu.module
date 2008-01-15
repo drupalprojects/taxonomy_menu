@@ -43,50 +43,10 @@ function taxonomy_menu_help($section) {
  * Most of the heavy lifting of the module is done here.
  */
 function taxonomy_menu_menu($may_cache) {
-  $items = array();
-
-  if ($may_cache) {
-   $items[]= array (
-      'path' => 'admin/settings/taxonomy_menu',
-      'title' => t('Taxonomy Menu settings'),
-      'callback' => 'drupal_get_form',
-      'callback arguments' => array('taxonomy_menu_admin_settings'),
-      'access' => user_access('administer site configuration'),
-      'description' => t('Global configuration of taxonomy menu functionality.'),
-      'type' => MENU_NORMAL_ITEM,
-    );
-
-    $access = user_access('access content');
-
-    foreach (taxonomy_get_vocabularies() as $vocabulary) {
-      if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
-        $path = 'taxonomy_menu/'. $vocabulary->vid;
-        $items[] = array('path' => $path, 'title' => t($vocabulary->name),
-          'callback' => 'taxonomy_menu_page', 'access' => $access,
-          'weight' => $vocabulary->weight);
-
-        $tree = taxonomy_get_tree($vocabulary->vid);
-        $old_depth = -1;
-        $old_path = $path;
-
-        foreach ($tree as $term) {
-          if ($term->depth <= $old_depth) {
-            $slashes_to_remove = $old_depth - $term->depth + 1;
-            for ($i = 0; $i < $slashes_to_remove; $i++) {
-              $old_path = substr($old_path, 0, strrpos($old_path, '/'));
-            }
-          }
-          $path = $old_path .'/'. $term->tid;
-          $old_depth = $term->depth;
-          $old_path = $path;
-          $items[] = array('path' => $path, 'title' => t($term->name),
-            'weight' => $term->weight);
-        }
-      }
-    }
+  if (!empty($may_cache)) {
+    require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.inc');
+    return _taxonomy_menu_menu();
   }
-
-  return $items;
 }
 
 /**
