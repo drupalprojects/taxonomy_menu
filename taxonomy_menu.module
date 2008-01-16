@@ -85,6 +85,7 @@ function taxonomy_menu_menu($may_cache) {
  */
 function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
   static $vocabs = array();
+
   // First check if the node has a relevant category.s
   if (empty($vocabs) and is_array($vocabs)) {
 
@@ -109,7 +110,7 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
     }
   }
 
-  if ($op == 'view' and $a4 == TRUE) {
+  if ($op == 'view' and $a4 == TRUE and !empty($vocabs)) {
     require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.inc');
     _taxonomy_menu_node_view($node, $vocabs);
   }

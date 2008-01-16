@@ -93,6 +93,7 @@ function _taxonomy_menu_admin() {
   );
 
   $form['submit'] = array(
+    '#value'          => t('Submit')
     '#type'           => 'submit'
   );
 
@@ -121,7 +122,7 @@ function _taxonomy_menu_menu() {
   $access = user_access('access content');
 
   foreach (taxonomy_get_vocabularies() as $vocabulary) {
-    if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
+    if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, TAXONOMY_MENU_NONE)) {
       $path =  variable_get('taxonomy_menu_display_page', 'category') .'/'. $vocabulary->vid;
       $items[$path] = array(
         'access'          => $access,
