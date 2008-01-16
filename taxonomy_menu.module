@@ -26,6 +26,29 @@ function __taxonomy_menu_admin() {
 }
 
 /**
+ * Admin area. Configure the module, setting which
+ * vocabularies will be converted into menus items
+ */
+function __taxonomy_menu_admin_submit(&$form_id, &$form) {
+  // Save these options
+  variable_set('taxonomy_menu_display_page',        $form['taxonomy_menu_display_page']);
+  variable_set('taxonomy_menu_display_num',         $form['taxonomy_menu_display_num']);
+  variable_set('taxonomy_menu_hide_empty',          $form['taxonomy_menu_hide_empty']);
+  variable_set('taxonomy_menu_display_descendants', $form['taxonomy_menu_display_descendants']);
+
+  // Save which category should be displayed on menu
+  foreach (taxonomy_get_vocabularies() as $vocab) {
+    variable_set('taxonomy_menu_show_'. $vocab->vid, $form['taxonomy_menu_show_'. $vocab->vid]);
+    if (module_exists('views')) {
+      variable_set('taxonomy_menu_show_views_'. $vocab->vid, $form['taxonomy_menu_show_view_'. $vocab->vid]);
+    }
+  }
+
+  // Rebuild the menu to include these features
+  menu_rebuild();
+}
+
+/**
  * Implementation of hook_help().
  */
 function taxonomy_menu_help($section) {

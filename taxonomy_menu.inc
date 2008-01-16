@@ -172,6 +172,52 @@ function _taxonomy_menu_menu() {
 }
 
 /**
+ * Generates the breadcumb for nodes that
+ * have a category listed as a menu
+ *
+ * @param
+ *   Object. The node object
+ * @param
+ *   Array. The list of all taxonomy vocabs and
+ *   terms that this node have and are also
+ *   menus
+ */
+function _taxonomy_menu_node_view(&$node, &$vocabs) {
+  foreach ($vocabs as $vid => $vocab) {
+    $path = variable_get('taxonomy_menu_display_page', 'category') .'/'. $vid;
+
+    $tree = taxonomy_get_tree($vid);
+    $old_depth = -1;
+    $old_path = $path;
+
+    // Generate the entire breadcumb
+    foreach ($tree as $term) {
+      if ($term->depth <= $old_depth) {
+        $slashes_to_remove = $old_depth - $term->depth + 1;
+        for ($i = 0; $i < $slashes_to_remove; $i++) {
+          $old_path = substr($old_path, 0, strrpos($old_path, "/"));
+        }
+      }
+      $path       = $old_path .'/'. $term->tid;
+      $old_depth  = $term->depth;
+      $old_path   = $path;
+
+      // When we reach the term that this node uses,
+      // set the breadcumb
+      if ($term->tid == $vocab[0]) {
+        menu_set_location(array(
+          array('path' => $path, 'title' => t($term->name)),
+          array('path' => 'node/'. $node->nid, 'title' => $node->title)
+        ));
+
+        // Quit after the first match.
+        return;
+      }
+    }
+  }
+}
+
+/**
  * Page callback that renders a node listing for the selected term.
  */
 function _taxonomy_menu_page() {
