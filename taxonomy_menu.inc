@@ -112,10 +112,12 @@ function _taxonomy_menu_menu() {
     'file'                => 'taxonomy_menu.inc',
     'description'         => t('Global configuration of taxonomy menu functionality.'),
     'path'                => 'admin/settings/taxonomy_menu',
-    'title'               => t('Taxonomy Menu Plus settings'),
+    'title'               => t('Taxonomy Menu'),
     'type'                => MENU_NORMAL_ITEM
   );
 
+  // This user access function will be used for
+  // all menu items
   $access = user_access('access content');
 
   foreach (taxonomy_get_vocabularies() as $vocabulary) {
