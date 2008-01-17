@@ -93,7 +93,7 @@ function _taxonomy_menu_admin() {
   );
 
   $form['submit'] = array(
-    '#value'          => t('Submit')
+    '#value'          => t('Submit'),
     '#type'           => 'submit'
   );
 
@@ -232,12 +232,12 @@ function _taxonomy_menu_page() {
       $tid = db_escape_string(array_pop($tid));
 
       $feed = url('taxonomy/term/'. $tid .'/'.
-        (variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0) .
+        (variable_get('taxonomy_menu_display_descendants', TRUE) ? 'all' : 0) .
         '/feed');
       drupal_add_feed($feed);
 
       $result = taxonomy_select_nodes(array($tid), 'or',
-        variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0);
+        variable_get('taxonomy_menu_display_descendants', TRUE) ? 'all' : 0);
 
       $output = taxonomy_render_nodes($result);
     }
@@ -249,10 +249,7 @@ function _taxonomy_menu_page() {
       // Embed the views output into the page
       $output = views_build_view('embed',
         views_get_view(variable_get('taxonomy_menu_show_views_'. arg(2), '')),
-        array($tid), FALSE, NULL);
-    }
-    elseif (variable_get('taxonomy_menu_show_'. $vid, TAXONOMY_MENU_NORMAL) == taxonomy_menu_DEFAULT_TAX) {
-
+        array($vid, $tid), FALSE, NULL);
     }
   }
 
