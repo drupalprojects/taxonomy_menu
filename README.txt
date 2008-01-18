@@ -31,7 +31,7 @@ INTEGRATE WITH VIEWS
    only the teaser, the full content; you decide.
 
 4) Yet on Views page, on Argument fieldset, include Vocabulary ID as
-   the first argument and Term ID as the second.
+   the first argument and Term ID as the second (both optional).
 
 5) On Taxonomy Menu Settings page, select the new Views that you
    created.

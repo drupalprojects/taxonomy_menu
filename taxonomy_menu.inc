@@ -223,22 +223,41 @@ function _taxonomy_menu_node_view(&$node, &$vocabs) {
  */
 function _taxonomy_menu_page() {
   // Check if the Vocabulary ID is set
-  if ($vid = arg(2)) {
+  if ($vid = arg(1)) {
 
     // Depending on what Output technique is used,
     // show the nodes' list
     if (variable_get('taxonomy_menu_show_'. $vid, TAXONOMY_MENU_NORMAL) == TAXONOMY_MENU_NORMAL) {
-      $tid = explode('/', $_GET['q']);
-      $tid = db_escape_string(array_pop($tid));
+      if ($tid = arg(2)) {
+        $tid = explode('/', $_GET['q']);
+        $tid = db_escape_string(array_pop($tid));
 
-      $feed = url('taxonomy/term/'. $tid .'/'.
-        (variable_get('taxonomy_menu_display_descendants', TRUE) ? 'all' : 0) .
-        '/feed');
-      drupal_add_feed($feed);
+        $feed = url('taxonomy/term/'. $tid .'/'.
+          (variable_get('taxonomy_menu_display_descendants', TRUE) ? 'all' : 0) .
+          '/feed');
+        drupal_add_feed($feed);
 
-      $result = taxonomy_select_nodes(array($tid), 'or',
-        variable_get('taxonomy_menu_display_descendants', TRUE) ? 'all' : 0);
+        $result = taxonomy_select_nodes(array($tid), 'or',
+          variable_get('taxonomy_menu_display_descendants', TRUE) ? 'all' : 0);
+      }
+      else {
+        // If no arg(2), we're looking at just the vid. If
+        // display_descendants is on, grab all terms regardless
+        // of depth. If off, grab depth 0 terms.
+        $tree = taxonomy_get_tree($vid);
+        $descendants = variable_get('taxonomy_menu_display_descendants', 1);
+        foreach ($tree as $term) {
+          if ($descendants or $term->depth == 0) {
+            $tids[] = $term->tid;
+          }
+        }
 
+        // The requested terms have already been determined,
+        // so don't request descendants here.
+        $result = taxonomy_select_nodes($tids, 'or', 0);
+      }
+
+      // Render the selected nodes
       $output = taxonomy_render_nodes($result);
     }
     elseif (variable_get('taxonomy_menu_show_'. $vid, TAXONOMY_MENU_NORMAL) == TAXONOMY_MENU_VIEW) {
@@ -246,10 +265,17 @@ function _taxonomy_menu_page() {
       $tid = explode('/', $_GET['q']);
       $tid = db_escape_string(array_pop($tid));
 
+      $arguments[] = $vid;
+
+      // Only add the Term ID if its not the Vocabulary ID
+      if ($vid != $tid) {
+        $arguments[] = $tid;
+      }
+
       // Embed the views output into the page
       $output = views_build_view('embed',
-        views_get_view(variable_get('taxonomy_menu_show_views_'. arg(2), '')),
-        array($vid, $tid), FALSE, NULL);
+        views_get_view(variable_get('taxonomy_menu_show_views_'. $vid, '')),
+        $arguments, FALSE, NULL);
     }
   }
 
