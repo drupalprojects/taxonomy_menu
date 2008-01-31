@@ -149,10 +149,15 @@ function _taxonomy_menu_menu() {
         $old_depth  = $term->depth;
         $old_path   = $path;
 
-       if (variable_get('taxonomy_menu_hide_empty', FALSE) == FALSE or $num != 0) {
+        // Calculate the numbers of children nodes
+        $num = taxonomy_term_count_nodes($term->tid);
+
+        // If the number of children nodes of this term is
+        // zero and the Hide Empty Terms option is enabled,
+        // dont create the menu item
+        if (variable_get('taxonomy_menu_hide_empty', FALSE) == FALSE or $num != 0) {
           $name = t($term->name);
           if (variable_get('taxonomy_menu_display_num', FALSE) == TRUE) {
-            $num = taxonomy_term_count_nodes($term->tid);
             $name .= ' ('. $num .')';
           }
           $items[$path] = array(

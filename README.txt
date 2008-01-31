@@ -16,7 +16,7 @@ INSTALLATION
    administration -> site configuration -> modules (admin/build/modules)
 
 3) Choose which vocabularies to appear in the menu at:
-   administration -> site configuration -> modules -> taxonomy menu
+   administration -> site configuration -> taxonomy menu
    (admin/settings/taxonomy_menu)
 
 

@@ -135,3 +135,7 @@ function __taxonomy_menu_page() {
 function taxonomy_menu_taxonomy() {
   menu_rebuild();
 }
+
+function taxonomy_menu_term_path(&$term) {
+  return 'asdf';
+}
