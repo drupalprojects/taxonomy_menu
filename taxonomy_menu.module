@@ -1,82 +1,73 @@
 <?php
-// $Id$
+/**
+ * $Id$
+ * @author Jonathan Chaffer   <jchaffer@structureinteractive.com>
+ * @author Bruno Massa        <http://drupal.org/user/67164>
+ * @file taxonomy_menu.module
+ * It Generates menu links for all taxonomy terms
+ */
 
-function taxonomy_menu_help($section) {
-  $output = "";
+// Some "magic numbers" revealed
+define('TAXONOMY_MENU_NONE',        0);
+define('TAXONOMY_MENU_NORMAL',      1);
+define('TAXONOMY_MENU_VIEW',        2);
+define('TAXONOMY_MENU_DEFAULT_TAX', 3);
 
-  switch ($section) {
-    case "admin/system/modules#description":
-      $output = "Adds links to taxonomy terms to the global navigation menu.";
-      break;
-  }
-  
-  return t($output);
-} // taxonomy_menu_help
+/**
+ * Implementation of hook_menu().
+ *
+ * Its the main function for this module.
+ */
+function taxonomy_menu_menu() {
+  require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.inc');
+  return _taxonomy_menu_menu();
+}
 
+/**
+ * Implementation of hook_nodeapi().
+ *
+ * This hook enables the menu to be displayed in context during node views.
+ */
+function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
+  static $vocabs = array();
+  // First check if the node has a relevant category.s
+  if (empty($vocabs) and is_array($vocabs)) {
 
-function taxonomy_menu_link($type, $node = NULL) {
-  if ($type == "system") {
-    foreach (taxonomy_get_vocabularies() as $vocabulary) {
-      if (variable_get("taxonomy_menu_show_" . $vocabulary->vid, 1)) {
-        $path = "taxonomy_menu/" . $vocabulary->vid;
-        menu($path, t($vocabulary->name));
-  
-        $tree = taxonomy_get_tree($vocabulary->vid);
-        $old_depth = -1;
-        $old_path = $path;
-        
-        foreach ($tree as $term) {
-          if ($term->depth <= $old_depth) {
-            $slashes_to_remove = $old_depth - $term->depth + 1;
-            for ($i = 0; $i < $slashes_to_remove; $i++) {
-              $old_path = substr($old_path, 0, strrpos($old_path, "/"));
-            }
-          }
-          $path = $old_path . "/" . $term->tid;
-          $old_depth = $term->depth;
-          $old_path = $path;
-          menu($path, t($term->name), "taxonomy_menu_page", $term->weight);
-        }
+    // The node should have taxonomy terms
+    if (!$terms = taxonomy_node_get_terms($node)) {
+      return;
+    }
+
+    // Check if at least one vocabulary is revelevant
+    // for us, being a menu
+    foreach ($terms as $term) {
+      if (variable_get('taxonomy_menu_show_'. $term->vid, TAXONOMY_MENU_NONE)) {
+        $vocabs[$term->vid][] = $term->tid;
       }
     }
+
+    // If none of the terms are tracked by this module,
+    // forget it
+    if (empty($vocabs)) {
+      $vocabs = FALSE;
+      return;
+    }
   }
-} // taxonomy_menu_link
 
-
-function taxonomy_menu_settings() {
-  foreach (taxonomy_get_vocabularies() as $vocabulary) {
-    $vocab_form = form_checkbox(t("show in menu"), "taxonomy_menu_show_" . $vocabulary->vid, 1, variable_get("taxonomy_menu_show_" . $vocabulary->vid, 1));
-    
-    $form .= form_item(t($vocabulary->name), $vocab_form);
+  if ($op == 'view' and $a4 == TRUE and !empty($vocabs)) {
+    require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.inc');
+    _taxonomy_menu_node_view($node, $vocabs);
   }
-  
-  return $form;
-} // taxonomy_menu_settings
-
-
-function taxonomy_menu_page() {
-  if (arg(2)) {
-    $arguments = explode("/", $_GET["q"]);
-    $main_tid = check_query(array_pop($arguments));
+  elseif ($op == 'update' or $op == 'insert') {
+      menu_rebuild();
   }
-  else {
-    $main_tid = 0;
-  }
-  $tree = taxonomy_get_tree(arg(1), $main_tid);
-  $tids = array_map("_taxonomy_menu_get_tid_from_term", $tree);
-  $tids[] = $main_tid;
-  $taxonomy->operator = "or";
-  $taxonomy->tids = $tids;
-  $taxonomy->str_tids = implode(",", $tids);
+}
 
-  theme("header");  
-  taxonomy_render_nodes(taxonomy_select_nodes($taxonomy));
-  theme("footer");  
-} // taxonomy_menu_page
-
-
-function _taxonomy_menu_get_tid_from_term($term) {
-  return $term->tid;
-} // _taxonomy_menu_get_tid_from_term
-
-?>
+/**
+ * Implementation of hook_taxonomy().
+ *
+ * Invalidates the menu cache on taxonomy changes.
+ */
+function taxonomy_menu_taxonomy() {
+  menu_rebuild();
+}
