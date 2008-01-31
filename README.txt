@@ -1,15 +1,13 @@
 TAXONOMY MENU
-
+=============
 
 INTRO
 =====
-
 This module adds links to taxonomy terms to the global navigation menu.
 
 
 INSTALLATION
 ============
-
 1) Place this module directory into your Drupal modules directory.
 
 2) Enable the taxonomy_menu module in Drupal, at:
@@ -22,7 +20,6 @@ INSTALLATION
 
 INTEGRATE WITH VIEWS
 ====================
-
 1) Install Views module
 
 2) Enable Views and Views UI module
