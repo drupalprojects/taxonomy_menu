@@ -59,7 +59,7 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
     require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.inc');
     _taxonomy_menu_node_view($node, $vocabs);
   }
-  elseif ($op == 'update' or $op == 'insert') {
+  elseif ($op == 'update' or $op == 'insert' or $op == 'delete') {
       menu_rebuild();
   }
 }
