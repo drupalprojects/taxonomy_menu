@@ -24,24 +24,15 @@ function _taxonomy_menu_admin(&$form_state) {
 
   // If the Views module is enabled, add some special
   // new features
-//   if (module_exists('views')) {
-//     // Add the Views file with more functions
-//     require_once(drupal_get_path('module', 'views') .'/views_cache.inc');
-//
-//     // Add a new options on Categories
-//     $options[TAXONOMY_MENU_VIEW] = t('Views');
-//
-//     // Get the list of User generated views
-//     $views = db_query("SELECT * FROM {view_view}");
-//     while ($view = db_fetch_array($views)) {
-//       $views_list[$view['name']] = $view['page_title'];
-//     }
-//
-//     // Now get a list of default Views
-//     foreach (_views_get_default_views() as $view => $viewdata) {
-//       $views_list[$view] = $viewdata->name;
-//     }
-//   }
+  if (module_exists('views')) {
+    // Add a new options on Categories
+    $options[TAXONOMY_MENU_VIEW] = t('Views');
+
+    // Now get a list of Views
+    foreach (views_get_all_views() as $view => $viewdata) {
+      $views_list[$view] = $viewdata->name;
+    }
+  }
 
   // If the Taxonomy Default module is enabled, add some special
   // new features
@@ -126,7 +117,7 @@ function _taxonomy_menu_admin_submit($form, &$form_state) {
     variable_set('taxonomy_menu_show_'. $vocab->vid,
       $form_state['values']['taxonomy_menu_show_'. $vocab->vid]);
     variable_set('taxonomy_menu_show_views_'. $vocab->vid,
-      $form_state['values']['taxonomy_menu_show_view_'. $vocab->vid]);
+      $form_state['values']['taxonomy_menu_show_views_'. $vocab->vid]);
   }
 
   // Rebuild the menu to include these features
@@ -161,7 +152,8 @@ function _taxonomy_menu_menu() {
         'weight'          => $vocab->weight
       );
 
-      $tree = taxonomy_get_tree($vocab->vid);
+      //use helper function so it does not pull the tree from the cache. Issue #339672
+      $tree = _taxonomy_menu_taxonomy_get_tree($vocab->vid);
       $old_depth = -1;
       $old_path = $path;
 
@@ -316,9 +308,8 @@ function _taxonomy_menu_page() {
       }
 
       // Embed the views output into the page
-      $output = views_build_view('embed',
-        views_get_view(variable_get('taxonomy_menu_show_views_'. $vid, '')),
-        $arguments, FALSE, NULL);
+      $view = views_get_view(variable_get('taxonomy_menu_show_views_'. $vid, ''));
+      $output = $view->execute_display('embed', $arguments);
     }
     elseif (variable_get('taxonomy_menu_show_'. $vid, TAXONOMY_MENU_NONE) == TAXONOMY_MENU_DEFAULT_TAX) {
 
@@ -328,3 +319,58 @@ function _taxonomy_menu_page() {
   // If no content found, return a "error" message
   return empty($output) ? t('No content for this category.') : $output;
 }
+
+/**
+ *  Helper function to retrieve the terms while avoiding the cache
+ *
+ *  Issue #339672
+ *
+ * @param <type> $vid
+ * @param <type> $parent
+ * @param <type> $depth
+ * @param <type> $max_depth
+ * @return <type>
+ */
+function _taxonomy_menu_taxonomy_get_tree($vid, $parent = 0, $depth = -1, $max_depth = NULL) {
+
+  $depth++;
+
+  //** Removed from taxonomy_get_tree version START
+  // We cache trees, so it's not CPU-intensive to call get_tree() on a term
+  // and its children, too.
+  //if (!isset($children[$vid])) {
+  //** Removed from taxonomy_get_tree version END
+    $children[$vid] = array();
+
+    $result = db_query(db_rewrite_sql('SELECT t.tid, t.*, parent FROM {term_data} t INNER JOIN {term_hierarchy} h ON t.tid = h.tid WHERE t.vid = %d ORDER BY weight, name', 't', 'tid'), $vid);
+    while ($term = db_fetch_object($result)) {
+      $children[$vid][$term->parent][] = $term->tid;
+      $parents[$vid][$term->tid][] = $term->parent;
+      $terms[$vid][$term->tid] = $term;
+    }
+  //** Removed from taxonomy_get_tree version START
+  //}
+  //** Removed from taxonomy_get_tree version END
+
+  $max_depth = (is_null($max_depth)) ? count($children[$vid]) : $max_depth;
+  $tree = array();
+  if (!empty($children[$vid][$parent])) {
+    foreach ($children[$vid][$parent] as $child) {
+      if ($max_depth > $depth) {
+        $term = drupal_clone($terms[$vid][$child]);
+        $term->depth = $depth;
+        // The "parent" attribute is not useful, as it would show one parent only.
+        unset($term->parent);
+        $term->parents = $parents[$vid][$child];
+        $tree[] = $term;
+
+        if (!empty($children[$vid][$child])) {
+          $tree = array_merge($tree, taxonomy_get_tree($vid, $child, $depth, $max_depth));
+        }
+      }
+    }
+  }
+
+  return $tree;
+}
+
