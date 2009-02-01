@@ -24,24 +24,15 @@ function _taxonomy_menu_admin(&$form_state) {
 
   // If the Views module is enabled, add some special
   // new features
-//   if (module_exists('views')) {
-//     // Add the Views file with more functions
-//     require_once(drupal_get_path('module', 'views') .'/views_cache.inc');
-//
-//     // Add a new options on Categories
-//     $options[TAXONOMY_MENU_VIEW] = t('Views');
-//
-//     // Get the list of User generated views
-//     $views = db_query("SELECT * FROM {view_view}");
-//     while ($view = db_fetch_array($views)) {
-//       $views_list[$view['name']] = $view['page_title'];
-//     }
-//
-//     // Now get a list of default Views
-//     foreach (_views_get_default_views() as $view => $viewdata) {
-//       $views_list[$view] = $viewdata->name;
-//     }
-//   }
+  if (module_exists('views')) {
+    // Add a new options on Categories
+    $options[TAXONOMY_MENU_VIEW] = t('Views');
+
+    // Now get a list of Views
+    foreach (views_get_all_views() as $view => $viewdata) {
+      $views_list[$view] = $viewdata->name;
+    }
+  }
 
   // If the Taxonomy Default module is enabled, add some special
   // new features
@@ -64,14 +55,14 @@ function _taxonomy_menu_admin(&$form_state) {
     );
 
     // In case of View options selected, select Views
-//     if (module_exists('views')) {
-//       $form[$vocab->vid]['taxonomy_menu_show_view_'. $vocab->vid] = array(
-//         '#default_value'  => variable_get('taxonomy_menu_show_view_'. $vocab->vid, ''),
-//         '#options'        => $views_list,
-//         '#title'          => t('Views available'),
-//         '#type'           => 'select'
-//       );
-//     }
+    if (module_exists('views')) {
+      $form[$vocab->vid]['taxonomy_menu_show_views_'. $vocab->vid] = array(
+        '#default_value'  => variable_get('taxonomy_menu_show_views_'. $vocab->vid, ''),
+        '#options'        => $views_list,
+        '#title'          => t('Views available'),
+        '#type'           => 'select'
+      );
+    }
   }
 
   // General options
@@ -126,7 +117,7 @@ function _taxonomy_menu_admin_submit($form, &$form_state) {
     variable_set('taxonomy_menu_show_'. $vocab->vid,
       $form_state['values']['taxonomy_menu_show_'. $vocab->vid]);
     variable_set('taxonomy_menu_show_views_'. $vocab->vid,
-      $form_state['values']['taxonomy_menu_show_view_'. $vocab->vid]);
+      $form_state['values']['taxonomy_menu_show_views_'. $vocab->vid]);
   }
 
   // Rebuild the menu to include these features
@@ -317,9 +308,8 @@ function _taxonomy_menu_page() {
       }
 
       // Embed the views output into the page
-      $output = views_build_view('embed',
-        views_get_view(variable_get('taxonomy_menu_show_views_'. $vid, '')),
-        $arguments, FALSE, NULL);
+      $view = views_get_view(variable_get('taxonomy_menu_show_views_'. $vid, ''));
+      $output = $view->execute_display('embed', $arguments);
     }
     elseif (variable_get('taxonomy_menu_show_'. $vid, TAXONOMY_MENU_NONE) == TAXONOMY_MENU_DEFAULT_TAX) {
 
