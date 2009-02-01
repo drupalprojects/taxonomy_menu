@@ -161,7 +161,8 @@ function _taxonomy_menu_menu() {
         'weight'          => $vocab->weight
       );
 
-      $tree = taxonomy_get_tree($vocab->vid);
+      //use helper function so it does not pull the tree from the cache. Issue #339672
+      $tree = _taxonomy_menu_taxonomy_get_tree($vocab->vid);
       $old_depth = -1;
       $old_path = $path;
 
@@ -328,3 +329,58 @@ function _taxonomy_menu_page() {
   // If no content found, return a "error" message
   return empty($output) ? t('No content for this category.') : $output;
 }
+
+/**
+ *  Helper function to retrieve the terms while avoiding the cache
+ *
+ *  Issue #339672
+ *
+ * @param <type> $vid
+ * @param <type> $parent
+ * @param <type> $depth
+ * @param <type> $max_depth
+ * @return <type>
+ */
+function _taxonomy_menu_taxonomy_get_tree($vid, $parent = 0, $depth = -1, $max_depth = NULL) {
+
+  $depth++;
+
+  //** Removed from taxonomy_get_tree version START
+  // We cache trees, so it's not CPU-intensive to call get_tree() on a term
+  // and its children, too.
+  //if (!isset($children[$vid])) {
+  //** Removed from taxonomy_get_tree version END
+    $children[$vid] = array();
+
+    $result = db_query(db_rewrite_sql('SELECT t.tid, t.*, parent FROM {term_data} t INNER JOIN {term_hierarchy} h ON t.tid = h.tid WHERE t.vid = %d ORDER BY weight, name', 't', 'tid'), $vid);
+    while ($term = db_fetch_object($result)) {
+      $children[$vid][$term->parent][] = $term->tid;
+      $parents[$vid][$term->tid][] = $term->parent;
+      $terms[$vid][$term->tid] = $term;
+    }
+  //** Removed from taxonomy_get_tree version START
+  //}
+  //** Removed from taxonomy_get_tree version END
+
+  $max_depth = (is_null($max_depth)) ? count($children[$vid]) : $max_depth;
+  $tree = array();
+  if (!empty($children[$vid][$parent])) {
+    foreach ($children[$vid][$parent] as $child) {
+      if ($max_depth > $depth) {
+        $term = drupal_clone($terms[$vid][$child]);
+        $term->depth = $depth;
+        // The "parent" attribute is not useful, as it would show one parent only.
+        unset($term->parent);
+        $term->parents = $parents[$vid][$child];
+        $tree[] = $term;
+
+        if (!empty($children[$vid][$child])) {
+          $tree = array_merge($tree, taxonomy_get_tree($vid, $child, $depth, $max_depth));
+        }
+      }
+    }
+  }
+
+  return $tree;
+}
+

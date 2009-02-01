@@ -34,8 +34,9 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
   // First check if the node has a relevant category.s
   if (empty($vocabs) and is_array($vocabs)) {
 
+    $terms = taxonomy_node_get_terms($node);
     // The node should have taxonomy terms
-    if (!$terms = taxonomy_node_get_terms($node)) {
+    if (empty($terms)) {
       return;
     }
 
