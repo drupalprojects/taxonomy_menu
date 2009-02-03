@@ -57,13 +57,12 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
   }
 
   if ($op == 'view' and $a4 == TRUE and !empty($vocabs)) {
-    variable_set('menu_rebuild_needed', TRUE);
     require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.inc');
     _taxonomy_menu_node_view($node, $vocabs);
   }
-//  elseif ($op == 'update' or $op == 'insert' or $op == 'delete') {
-//      drupal_flush_all_caches();
-//  }
+  elseif ($op == 'update' or $op == 'insert' or $op == 'delete') {
+      variable_set('menu_rebuild_needed', TRUE);
+  }
 }
 
 /**
