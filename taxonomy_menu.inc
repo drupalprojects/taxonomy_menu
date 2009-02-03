@@ -153,7 +153,7 @@ function _taxonomy_menu_menu() {
       );
 
       //use helper function so it does not pull the tree from the cache. Issue #339672
-      $tree = _taxonomy_menu_taxonomy_get_tree($vocab->vid);
+      $tree = taxonomy_get_tree($vocab->vid);
       $old_depth = -1;
       $old_path = $path;
 
@@ -320,57 +320,102 @@ function _taxonomy_menu_page() {
   return empty($output) ? t('No content for this category.') : $output;
 }
 
+
 /**
- *  Helper function to retrieve the terms while avoiding the cache
- *
- *  Issue #339672
- *
- * @param <type> $vid
- * @param <type> $parent
- * @param <type> $depth
- * @param <type> $max_depth
- * @return <type>
+ * function to reteive the menu items for a vocab
+ * @param int $vid
+ * @return array(mlid => tid)
  */
-function _taxonomy_menu_taxonomy_get_tree($vid, $parent = 0, $depth = -1, $max_depth = NULL) {
-
-  $depth++;
-
-  //** Removed from taxonomy_get_tree version START
-  // We cache trees, so it's not CPU-intensive to call get_tree() on a term
-  // and its children, too.
-  //if (!isset($children[$vid])) {
-  //** Removed from taxonomy_get_tree version END
-    $children[$vid] = array();
-
-    $result = db_query(db_rewrite_sql('SELECT t.tid, t.*, parent FROM {term_data} t INNER JOIN {term_hierarchy} h ON t.tid = h.tid WHERE t.vid = %d ORDER BY weight, name', 't', 'tid'), $vid);
-    while ($term = db_fetch_object($result)) {
-      $children[$vid][$term->parent][] = $term->tid;
-      $parents[$vid][$term->tid][] = $term->parent;
-      $terms[$vid][$term->tid] = $term;
-    }
-  //** Removed from taxonomy_get_tree version START
-  //}
-  //** Removed from taxonomy_get_tree version END
-
-  $max_depth = (is_null($max_depth)) ? count($children[$vid]) : $max_depth;
-  $tree = array();
-  if (!empty($children[$vid][$parent])) {
-    foreach ($children[$vid][$parent] as $child) {
-      if ($max_depth > $depth) {
-        $term = drupal_clone($terms[$vid][$child]);
-        $term->depth = $depth;
-        // The "parent" attribute is not useful, as it would show one parent only.
-        unset($term->parent);
-        $term->parents = $parents[$vid][$child];
-        $tree[] = $term;
-
-        if (!empty($children[$vid][$child])) {
-          $tree = array_merge($tree, taxonomy_get_tree($vid, $child, $depth, $max_depth));
-        }
-      }
-    }
+function _taxonomy_menu_get_mlid($vid) {
+  $sql = 'SELECT mlid, tid FROM {taxonomy_menu} WHERE vid = %d';
+  $result = db_query(db_rewrite_sql($sql), $vid);
+  $output = array();
+  while ($data = db_fetch_object($result)) {
+    $output[$data->mlid] = $data->tid;
   }
 
-  return $tree;
+  return $output;
 }
 
+/**
+ * function to save the menu to term relation
+ * @param array(mlid => tid) $menu_terms
+ * @param int $vid
+ */
+function _taxonomy_menu_save_mlid($menu_terms, $vid) {
+  //delete the records for the vid
+  //then insert the new rows
+  //this is safer then updating
+
+  db_query('DELETE FROM {taxonomy_menu} WHERE vid = %d', $vid);
+
+  if (!empty($menu_terms)) {
+    foreach ($menu_terms as $mlid => $tid) {
+      db_query('INSERT INTO {taxonomy_menu} (mlid, tid, vid) VALUES (%d, %d, %d)',
+        $mlid, $tid, $vid);
+    }
+  }
+}
+
+/**
+ *
+ * @param <type> $vid
+ */
+function _taxonomy_menu_create_menu_items($vid){
+    $menu_name = variable_get("taxonomy_menu_menu_name_$vid",'navigation');//the menu the links shall be attached to
+    $voc_item = variable_get("taxonomy_menu_voc_item_$vid",FALSE);//Shall Vocabulary have its own item?
+    $mlids =  _taxonomy_menu_get_mlid($vid);//The current Mlids for this vocabulary
+    $newmlids = array();
+    $path_op = variable_set('taxonomy_menu_path_handler_'. $vid,'default');
+
+    $parents = array();
+    $curdepth = -1;
+    $mlid = 0;
+    if ($voc_item){
+        $link_path = taxonomy_menu_path($vid,$path_op);
+        $mlid_this = array_search('voc',$mlids);
+        //get vocabulary data
+        $mlid = 0; // here will come menu_link_save()
+        $parents = array($mlid);
+    }
+    $tree = taxonomy_get_tree($vid);
+    $plid = 0;
+    foreach ($tree as $i=>$term){
+        // test if there's allready a menu item for this Term
+        $curmlid = array_search($term->tid,$mlids);
+        $item = array();
+        //get plid
+        if ($term->depth > $curdepth){
+            $plid = $mlid;
+            array_push($parents,$plid);
+        } elseif($term->depth < $curdepth) {
+            $plid = array_pop($parents);
+        }
+
+        $curdepth = $term->depth;
+        if (!$curmlid){
+            $item['mlid']=0; // New menu item!
+            $item['plid'] = $plid;
+            $item['link_path'] = taxonomy_menu_path($term,$path_op);
+            $item['link_title'] = $term->name;
+            $item['menu_name'] = $menu_name;
+
+        } else {
+            $item['mlid'] = $curmlid;
+            $item['link_path'] = taxonomy_menu_path($term,$path_op);
+            $item['link_title'] = $term->name;
+            unset($mlids[$curmlid]);
+        }
+        $item['module'] = 'taxonomy_menu';
+        $item['router_path'] = "taxonomy_menu/$vid";
+
+        $mlid = menu_link_save($item);
+        $newmlids[$mlid] = $term->tid;
+    }
+    //delete rest of mlids - non-existing term-ids
+    foreach ($mlids as $mlid=>$tid){
+        menu_link_delete($mlid);
+    }
+    //newmlids speichern
+    _taxonomy_menu_save_mlid($newmlids, $vid);
+}
