@@ -1,5 +1,5 @@
 ; $Id$
 core          = "6.x"
 dependency    = taxonomy
-description   = "Adds links to taxonomy terms to the global navigation menu."
+description   = "Adds links to taxonomy terms to a menu."
 name          = "Taxonomy Menu"
