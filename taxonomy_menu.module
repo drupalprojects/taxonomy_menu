@@ -32,9 +32,12 @@ function __taxonomy_menu_admin() {
 function __taxonomy_menu_admin_submit(&$form_id, &$form) {
   // Save these options
   variable_set('taxonomy_menu_display_page',        $form['taxonomy_menu_display_page']);
+  variable_set('taxonomy_menu_hide_module_page',    $form['taxonomy_menu_hide_module_page']);
   variable_set('taxonomy_menu_display_num',         $form['taxonomy_menu_display_num']);
   variable_set('taxonomy_menu_hide_empty',          $form['taxonomy_menu_hide_empty']);
   variable_set('taxonomy_menu_display_descendants', $form['taxonomy_menu_display_descendants']);
+  variable_set('taxonomy_menu_display_context',     $form['taxonomy_menu_display_context']);
+
 
   // Save which category should be displayed on menu
   foreach (taxonomy_get_vocabularies() as $vocab) {
@@ -45,7 +48,7 @@ function __taxonomy_menu_admin_submit(&$form_id, &$form) {
   }
 
   // Rebuild the menu to include these features
-  menu_rebuild();
+  variable_set('menu_rebuild_needed', TRUE);
 }
 
 /**
@@ -85,7 +88,11 @@ function taxonomy_menu_menu($may_cache) {
  */
 function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
   static $vocabs = array();
-
+  // skip checking for vocabs if display node context is disabled
+  if (!variable_get('taxonomy_menu_display_context', TRUE)) {
+    $vocabs = NULL;
+  }
+  
   // First check if the node has a relevant category.s
   if (empty($vocabs) and is_array($vocabs)) {
 
@@ -115,7 +122,7 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
     _taxonomy_menu_node_view($node, $vocabs);
   }
   elseif ($op == 'update' or $op == 'insert') {
-      menu_rebuild();
+      variable_set('menu_rebuild_needed', TRUE);
   }
 }
 
@@ -133,9 +140,14 @@ function __taxonomy_menu_page() {
  * Invalidates the menu cache on taxonomy changes.
  */
 function taxonomy_menu_taxonomy() {
-  menu_rebuild();
+  variable_set('menu_rebuild_needed', TRUE);
 }
 
 function taxonomy_menu_term_path(&$term) {
   return 'asdf';
 }
+
+/**
+ * Include pathauto & token functions for taxonomy_pathauto
+ */
+require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu_pathauto.inc');

@@ -58,7 +58,7 @@ function _taxonomy_menu_admin() {
     // In case of View options selected, select Views
     if (module_exists('views')) {
       $form[$vocab->vid]['taxonomy_menu_show_view_'. $vocab->vid] = array(
-        '#default_value'  => variable_get('taxonomy_menu_show_view_'. $vocab->vid, ''),
+        '#default_value'  => variable_get('taxonomy_menu_show_views_'. $vocab->vid, ''),
         '#options'        => $views_list,
         '#title'          => t('Views available'),
         '#type'           => 'select'
@@ -72,6 +72,12 @@ function _taxonomy_menu_admin() {
     '#description'    => t('How should be the first item on the menu? Example: categories/1/2/3, technology/1/2/3'),
     '#title'          => t('Module page'),
     '#type'           => 'textfield',
+  );
+  $form['taxonomy_menu_hide_module_page'] = array(
+    '#default_value'  => variable_get('taxonomy_menu_hide_module_page', FALSE),
+    '#description'    => t('If checked, links to module page removes from all paths. path will be like "1/2/3" instead of "categories/1/2/3"'),
+    '#title'          => t('Hide link to module page'),
+    '#type'           => 'checkbox',
   );
   $form['taxonomy_menu_display_num'] = array(
     '#default_value'  => variable_get('taxonomy_menu_display_num', FALSE),
@@ -91,6 +97,12 @@ function _taxonomy_menu_admin() {
     '#title'          => t('Display descendants'),
     '#type'           => 'checkbox',
   );
+  $form['taxonomy_menu_display_context'] = array(
+    '#default_value'  => variable_get('taxonomy_menu_display_context', TRUE),
+    '#description'    => t('Display an active menu item for the first matching taxonomy term of the current node.'),
+    '#title'          => t('Display in context.'),
+    '#type'           => 'checkbox',
+  );
 
   $form['submit'] = array(
     '#value'          => t('Submit'),
@@ -106,6 +118,13 @@ function _taxonomy_menu_admin() {
  * Its the main function for this module.
  */
 function _taxonomy_menu_menu() {
+  /**
+  if (module_exists('pathauto')) {
+    $pathauto_exists=true;
+    _pathauto_include();
+  }
+  **/
+
   $items['admin/settings/taxonomy_menu'] = array(
     'access'              => user_access('administer site configuration'),
     'callback'            => 'drupal_get_form',
@@ -123,7 +142,14 @@ function _taxonomy_menu_menu() {
 
   foreach (taxonomy_get_vocabularies() as $vocabulary) {
     if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, TAXONOMY_MENU_NONE)) {
-      $path =  variable_get('taxonomy_menu_display_page', 'category') .'/'. $vocabulary->vid;
+    //  $path =  variable_get('taxonomy_menu_display_page', 'category') .'/'. $vocabulary->vid;
+      if(variable_get('taxonomy_menu_hide_module_page', FALSE)) {
+        $path =  $vocabulary->vid;
+      }
+      else {
+        $path =  variable_get('taxonomy_menu_display_page', 'category') .'/'. $vocabulary->vid;
+      }
+
       $items[$path] = array(
         'access'          => $access,
         'callback'        => '__taxonomy_menu_page',
@@ -134,9 +160,23 @@ function _taxonomy_menu_menu() {
         'weight'          => $vocabulary->weight
       );
 
+      /**
+      if($pathauto_exists) {
+        $placeholders = pathauto_get_placeholders('taxonomy', $vocabulary);
+        $alias = pathauto_create_alias('taxonomy_menu', 'update', $placeholders, $path,$vocabulary->vid);
+      }
+      **/
+
       $tree = taxonomy_get_tree($vocabulary->vid);
       $old_depth = -1;
       $old_path = $path;
+
+      /**
+      if($pathauto_exists) {
+        $placeholders = pathauto_get_placeholders('taxonomy', $term);
+        $alias = pathauto_create_alias('taxonomy_menu', 'update', $placeholders, $path,$term->tid);
+      }
+      **/
 
       foreach ($tree as $term) {
         if ($term->depth <= $old_depth) {
@@ -190,35 +230,47 @@ function _taxonomy_menu_menu() {
  */
 function _taxonomy_menu_node_view(&$node, &$vocabs) {
   foreach ($vocabs as $vid => $vocab) {
-    $path = variable_get('taxonomy_menu_display_page', 'category') .'/'. $vid;
+   if(variable_get('taxonomy_menu_hide_module_page', FALSE)) {
+     $path = $vid;
+   }
+   else {
+     $path =  variable_get('taxonomy_menu_display_page', 'category') .'/'. $vid;
+   }
 
-    $tree = taxonomy_get_tree($vid);
-    $old_depth = -1;
-    $old_path = $path;
+    $breadcrumb_items = array('path' => $path, 'title' => t(taxonomy_get_vocabulary($vid)->name)) +
+                        _taxonomy_menu_get_term_breadcrumb_items($vocab[0], $path) +
+                        array('path' => 'node/'. $node->nid, 'title' => $node->title);
 
-    // Generate the entire breadcumb
-    foreach ($tree as $term) {
-      if ($term->depth <= $old_depth) {
-        $slashes_to_remove = $old_depth - $term->depth + 1;
-        for ($i = 0; $i < $slashes_to_remove; $i++) {
-          $old_path = substr($old_path, 0, strrpos($old_path, "/"));
-        }
+    menu_set_location($breadcrumb_items);
+    return;
+  }
+}
+
+/**
+ * Generates location items for specifyed term and parent terms
+ *
+ * @param
+ *   Number. Term identificator.
+ * @param
+ *   Array. Base path for term (vocabulary path).
+ */
+function _taxonomy_menu_get_term_breadcrumb_items($tid, $path) {
+  $tree = taxonomy_get_tree(taxonomy_get_term($tid)->vid);
+
+  foreach ($tree as $term_node) {
+    if ($term_node->tid == $tid) {
+
+      $parent_items=array();
+
+      if ($term_node->parents[0]!=0) {
+        $parent_items = _taxonomy_menu_get_term_breadcrumb_items($term_node->parents[0], $path);
+        $parent = end($parent_items);
+        $path = $parent['path'];
       }
-      $path       = $old_path .'/'. $term->tid;
-      $old_depth  = $term->depth;
-      $old_path   = $path;
 
-      // When we reach the term that this node uses,
-      // set the breadcumb
-      if ($term->tid == $vocab[0]) {
-        menu_set_location(array(
-          array('path' => $path, 'title' => t($term->name)),
-          array('path' => 'node/'. $node->nid, 'title' => $node->title)
-        ));
+      array_push($parent_items, array('path' => $path.'/'.$term_node->tid, 'title' => t($term_node->name)));
 
-        // Quit after the first match.
-        return;
-      }
+      return $parent_items;
     }
   }
 }
@@ -228,12 +280,12 @@ function _taxonomy_menu_node_view(&$node, &$vocabs) {
  */
 function _taxonomy_menu_page() {
   // Check if the Vocabulary ID is set
-  if ($vid = arg(1)) {
+  if (($vid = arg(0)) || ($vid=variable_get('taxonomy_menu_hide_module_page', FALSE)?arg(0):FALSE)) {
 
     // Depending on what Output technique is used,
     // show the nodes' list
     if (variable_get('taxonomy_menu_show_'. $vid, TAXONOMY_MENU_NORMAL) == TAXONOMY_MENU_NORMAL) {
-      if ($tid = arg(2)) {
+      if ($tid=variable_get('taxonomy_menu_hide_module_page', FALSE)?arg(1):arg(2)) {
         $tid = explode('/', $_GET['q']);
         $tid = db_escape_string(array_pop($tid));
 
@@ -278,12 +330,21 @@ function _taxonomy_menu_page() {
       }
 
       // Embed the views output into the page
-      $output = views_build_view('embed',
-        views_get_view(variable_get('taxonomy_menu_show_views_'. $vid, '')),
-        $arguments, FALSE, NULL);
+      $view = views_get_view(variable_get('taxonomy_menu_show_views_'. $vid, ''));
+      $view_empty_text = $view->page_empty;
+
+      if ($view) {
+        // set $view->url to current page
+        $view->url = $_GET['q'];
+        $output = views_build_view('embed', $view, $arguments,$view->use_pager, $view->nodes_per_page);
+      }
+      else {
+        $output = '';
+      }
     }
   }
 
   // If no content found, return a "error" message
-  return empty($output) ? t('No content for this category.') : $output;
+  //return empty($output) ? t('No content for this category.') : $output;
+  return empty($output) ? ($view_empty_text ? $view_empty_text : t('No content for this category.')) : $output;
 }
