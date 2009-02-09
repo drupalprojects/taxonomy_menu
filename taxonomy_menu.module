@@ -2,12 +2,23 @@
 // $Id$
 
 /**
- * @author Jonathan Chaffer   <jchaffer@structureinteractive.com>
- * @author Bruno Massa        <http://drupal.org/user/67164>
  * @author Neil Hastings      <http://drupal.org/user/245817>
+ * @author Mark Theunissen    <http://drupal.org/user/108606>
+ * @author Afief Halumi       <http://drupal.org/user/237472>
  * @file taxonomy_menu.module
  * It Generates menu links for all selected taxonomy terms
  */
+
+define('TAXONOMY_MENU_INSERT', 0);
+define('TAXONOMY_MENU_DELETE', 1);
+define('TAXONOMY_MENU_SELECT', 2);
+define('TAXONOMY_MENU_VALUE', 3);
+define('TAXONOMY_MENU_OBJECT', 4);
+define('TAXONOMY_MENU_ARRAY', 5);
+
+//include the database layer
+require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu_database.inc');
+
 
 /**
  *  Implementation of hook_perm
@@ -76,8 +87,6 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#default_value' => variable_get("taxonomy_menu_voc_item_" . $form['vid']['#value'], 0),
       '#description' => t("Shall the vocabulary have it's own item"),
     );
-
-
 
     // move the buttons to the bottom of the form
     $form['delete']['#weight'] = 11;
@@ -179,15 +188,14 @@ function taxonomy_menu_taxonomy($op, $type, $term = NULL) {
  */
 function taxonomy_menu_rebuild_link_items($vid) {
   // delete all taxonomy_menu link items from this vocab
-  _taxonomy_menu_delete_all($vid);
+  taxonomy_menu_database(TAXONOMY_MENU_DELETE, array('vid' => $vid), array('delete_all' => TRUE));
 
   // rebuild vocab 'taxonomy_menu_voc_item_' . $vid
   $menu_name = variable_get('taxonomy_menu_vocab_' . $vid, 0);
+  $voc_item = variable_get('taxonomy_menu_voc_item_' . $vid, 0);
+
 
   if ($menu_name) {
-
-    $voc_mlid = variable_get('taxonomy_menu_voc_mlid_' . $vid, 0);
-
     foreach (taxonomy_get_tree($vid) as $term) {
       $item = array(
         'tid' => $term->tid,
@@ -199,9 +207,9 @@ function taxonomy_menu_rebuild_link_items($vid) {
         'menu_name' => $menu_name,
       );
 
-     /** if ($voc_item) {
+      if ($voc_item) {
         $item['tid'] = 0;
-      }**/
+      }
       _taxonomy_menu_add_item($item);
     }
     drupal_set_message(t('The taxonomy menu has been rebuilt.'), 'status');
@@ -269,7 +277,7 @@ function _taxonomy_menu_add_item($item) {
         'module' => 'taxonomy_menu',
       );
       if ($mlid = menu_link_save($link)) {
-        db_query('INSERT INTO {taxonomy_menu} (mlid, tid, vid) VALUES (%d, %d, %d)', $mlid, $item['tid'], $item['vid']);
+        _taxonomy_menu_insert_menu_item($mlid, $item['tid'], $item['vid']);
         return $mlid;
       }
       else {
@@ -281,13 +289,41 @@ function _taxonomy_menu_add_item($item) {
 }
 
 /**
+ *  helper function to insert a menu item
+ *
+ * @param $mlid
+ * @param $tid
+ * @param $vid
+ */
+function _taxonomy_menu_insert_menu_item($mlid, $tid, $vid) {
+  $args = array(
+    'mlid' => $mlid,
+    'tid' => $tid,
+    'vid' => $vid,
+  );
+
+  taxonomy_menu_database(TAXONOMY_MENU_INSERT, $args);
+  
+}
+/**
  * Return the corresponding menu link id.
  *
  * @param $tid
  *   the term's id
  */
 function _taxonomy_menu_get_mlid($tid) {
-  return db_result(db_query('SELECT mlid FROM {taxonomy_menu} WHERE tid = %d', $tid));
+  //return db_result(db_query('SELECT mlid FROM {taxonomy_menu} WHERE tid = %d', $tid));
+  
+  $args = array(
+    'tid' => $tid
+  );
+  
+  $options = array(
+    'return' => 'mlid',
+    'return_type' => TAXONOMY_MENU_VALUE,
+  );
+  
+  return taxonomy_menu_database(TAXONOMY_MENU_SELECT, $args, $options);
 }
 
 /**
@@ -299,36 +335,29 @@ function _taxonomy_menu_get_mlid($tid) {
  *   array(tid => mlid)
  */
 function _taxonomy_menu_get_menu_terms($vid) {
-  $result = db_query('SELECT mlid, tid FROM {taxonomy_menu} WHERE vid = %d', $vid);
+
+  /**$result = db_query('SELECT mlid, tid FROM {taxonomy_menu} WHERE vid = %d', $vid);
   $menu_terms = array();
   while ($data = db_fetch_object($result)) {
     $menu_terms[$data->tid] = $data->mlid;
-  }
+  } **/
 
-  return $menu_terms;
+  $args = array(
+    'vid' => $vid,
+  );
+
+  $options = array(
+    'return' => array('mlid', 'tid'),
+    'return_type' => TAXONOMY_MENU_ARRAY,
+    'return_array' => array(
+      'key' => 'tid',
+      'value'  => 'mlid',
+    )
+  );
+
+  return taxonomy_menu_database(TAXONOMY_MENU_SELECT, $args, $options);
 }
 
-/**
- * Delete all links associated with this vocab from both the taxonomy_menu
- * table and the menu_link table.
- *
- * @param $vid
- *   vocabulary's id
- */
-function _taxonomy_menu_delete_all($vid) {
-  $menu_terms = _taxonomy_menu_get_menu_terms($vid);
-  if (!empty($menu_terms)) {
-    foreach ($menu_terms as $tid => $mlid) {
-      db_query('DELETE FROM {menu_links} WHERE mlid = %d', $mlid);
-    }
-    db_query('DELETE FROM {taxonomy_menu} WHERE vid = %d', $vid);
-  }
-}
-
-
-
-
-// from here down, unchecked code. from the old version. all appears to be working!
 
 /**
  * Implementation of hook_nodeapi().
