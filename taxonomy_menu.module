@@ -10,7 +10,7 @@
  */
 
 //include the database layer
-require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu_database.inc');
+require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.database.inc');
 
 
 /**
@@ -80,6 +80,12 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#default_value' => variable_get("taxonomy_menu_voc_item_" . $form['vid']['#value'], 0),
       '#description' => t("Shall the vocabulary have it's own item"),
     );
+    $form['taxonomy_menu']['rebuild'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Select to rebuild the menu on submit.'),
+      '#default_value' => 0,
+      '#description' => t("Rebuild the menu on submit."),
+    );
 
     // move the buttons to the bottom of the form
     $form['delete']['#weight'] = 11;
@@ -98,6 +104,7 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
  */
 function taxonomy_menu_vocab_submit($form, &$form_state) {
   $vid = $form_state['values']['vid'];
+
   $old_menu = variable_get('taxonomy_menu_vocab_' . $vid, '0');
   $new_menu = $form_state['values']['vocab_enabled'];
 
@@ -108,7 +115,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
   variable_set('taxonomy_menu_voc_item_' . $vid, $form_state['values']['vocab_item_enabled']);
 
   // only rebuild if the menu option has changed.
-  if ($old_menu != $new_menu) {
+  if ($old_menu != $new_menu || $form_state['values']['rebuild']) {
     variable_set('taxonomy_menu_vocab_' . $vid, $new_menu);
     taxonomy_menu_rebuild_link_items($vid);
   }
@@ -152,18 +159,18 @@ function taxonomy_menu_taxonomy($op, $type, $term = NULL) {
 
     switch ($op) {
       case 'insert':
-        _taxonomy_menu_item_maintain($item);
+        taxonomy_menu_maintain('insert', $item);
 
         $message = "Term '@term' has been added to taxonomy menu '@menuname'";
         break;
 
       case 'update':
-        // todo... actually update
+        taxonomy_menu_maintain('update', $item);
         $message = "Term '@term' has been updated in taxonomy menu '@menuname'";
         break;
 
       case 'delete':
-        // todo... actually delete
+        taxonomy_menu_maintain('delete', array('tid' => $term['tid']));
         $message = "Term '@term' has been deleted from taxonomy menu '@menuname'";
         break;
     }
@@ -199,7 +206,7 @@ function taxonomy_menu_rebuild_link_items($vid) {
         'ptid' => 0,
         'menu_name' => $menu_name,
       );
-      _taxonomy_menu_item_maintain($item);
+      taxonomy_menu_maintain('insert', $item);
     }
 
     foreach (taxonomy_get_tree($vid) as $term) {
@@ -213,7 +220,7 @@ function taxonomy_menu_rebuild_link_items($vid) {
         'menu_name' => $menu_name,
       );
 
-      _taxonomy_menu_item_maintain($item);
+      taxonomy_menu_maintain('insert', $item);
     }
     drupal_set_message(t('The taxonomy menu has been rebuilt.'), 'status');
   }
@@ -338,7 +345,7 @@ function _taxonomy_menu_node_view(&$node, &$vocabs) {
  *   'update' => updated a menu link
  *   'delete' => detete a menu link
  * @param $item
- *  if $op == 'ADD' then
+ *  if $op == 'insert' then
  *    array with the following key/value pairs:
  *     'tid' => the term id (if 0 then adding the vocab as an item)
  *     'name' => the term's name
@@ -347,8 +354,8 @@ function _taxonomy_menu_node_view(&$node, &$vocabs) {
  *     'vid' => the vocabulary's id
  *     'ptid' => the term's parent's term id.  use 0 for vocab
  *     'menu_name' => the menu that the link item will be inserted into
- *  if $op == 'DELETE' then array('tid' => TermID) OR ('link_path' => path to menu item)
- *  if $op == 'UPDATE' then
+ *  if $op == 'delete' then array('tid' => TermID) OR ('link_path' => path to menu item)
+ *  if $op == 'update' then
  *    array with the following key/value pairs:
  *     'tid' => the term id (if 0 then updating the vocab as an item)
  *     'name' => new menu name
@@ -385,7 +392,7 @@ function _taxonomy_menu_node_view(&$node, &$vocabs) {
  * @param $op
  *  options are 'update', 'delete', 'insert'
  * @param $item
- *  if $op == 'ADD' then
+ *  if $op == 'insert' then
  *    array with the following key/value pairs:
  *     'tid' => the term id (if 0 then adding the vocab as an item)
  *     'name' => the term's name
@@ -394,8 +401,8 @@ function _taxonomy_menu_node_view(&$node, &$vocabs) {
  *     'vid' => the vocabulary's id
  *     'ptid' => the term's parent's term id
  *     'menu_name' => the menu that the link item will be inserted into
- *  if $op == 'DELETE' then array('tid' => TermID) OR ('link_path' => path to menu item)
- *  if $op == 'UPDATE' then
+ *  if $op == 'delete' then array('tid' => TermID) OR ('link_path' => path to menu item)
+ *  if $op == 'update' then
  *    array with the following key/value pairs:
  *     'tid' => the term id (if 0 then updating the vocab as an item)
  *     'name' => new menu name
@@ -476,7 +483,7 @@ function _taxonomy_menu_maintain($item) {
 
     if ($mlid = menu_link_save($link)) {
       if ($insert) {
-        _taxonomy_insert_menu_item($mlid, $item['tid'], $item['vid']);
+        _taxonomy_menu_insert_menu_item($mlid, $item['tid'], $item['vid']);
       }
       return $mlid;
     }
