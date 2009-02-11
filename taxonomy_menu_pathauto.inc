@@ -50,7 +50,7 @@ function taxonomy_menu_pathauto_bulkupdate() {
   $count = 0;
   foreach (taxonomy_get_vocabularies() as $category) { 
     // The Base Vocabulary path
-    $path =  variable_get('taxonomy_menu_display_page', 'category') .'/'. $category->vid;
+    $path =  variable_get('taxonomy_menu_display_page', 'category') . $category->vid;
   
     $tree = taxonomy_get_tree($category->vid);
     $old_depth = -1;
@@ -96,7 +96,7 @@ function taxonomy_menu_token_values($type, $object = NULL, $options = array()) {
       $category = $object;
 
       $vid = $category->vid;
-      $vocabulary = taxonomy_vocabulary_load($vid);
+      $vocabulary = taxonomy_get_vocabulary($vid);
       $values['tax-menu'] = variable_get('taxonomy_menu_display_page', 'category');
       $values['vid'] = $vid;
       $values['vocab'] = check_plain($vocabulary->name);
