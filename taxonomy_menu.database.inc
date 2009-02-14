@@ -3,13 +3,13 @@
 // $Id$
 
 /**
+ * @file
+ * Database functions
+ * 
  * @author Neil Hastings      <http://drupal.org/user/245817>
  * @author Mark Theunissen    <http://drupal.org/user/108606>
  * @author Afief Halumi       <http://drupal.org/user/237472>
- * @file taxonomy_menu.database.inc
- * Database functions
- **/
-
+ */
 
  /**
  *  helper function to insert a menu item
@@ -28,8 +28,8 @@ function _taxonomy_menu_insert_menu_item($mlid, $tid, $vid) {
  * @param $tid
  *   the term's id
  */
-function _taxonomy_menu_get_mlid($tid) {
-  return db_result(db_query('SELECT mlid FROM {taxonomy_menu} WHERE tid = %d', $tid));
+function _taxonomy_menu_get_mlid($tid, $vid) {
+  return db_result(db_query('SELECT mlid FROM {taxonomy_menu} WHERE tid = %d AND vid = %d', $tid, $vid));
 }
 
 /**
@@ -40,29 +40,59 @@ function _taxonomy_menu_get_mlid($tid) {
  * @return
  *   array(tid => mlid)
  */
-function _taxonomy_menu_get_menu_terms($vid) {
+function _taxonomy_menu_get_menu_items($vid) {
 
   $result = db_query('SELECT mlid, tid FROM {taxonomy_menu} WHERE vid = %d', $vid);
-  $menu_terms = array();
+  $menu_items = array();
   while ($data = db_fetch_object($result)) {
-    $menu_terms[$data->tid] = $data->mlid;
+    $menu_items[$data->tid] = $data->mlid;
   }
-  return $menu_terms;
+  return $menu_items;
 }
 
  /**
-	  * Delete all links associated with this vocab from both the taxonomy_menu
-	  * table and the menu_link table.
-	  *
-	  * @param $vid
-	  *   vocabulary's id
-	  */
-	 function _taxonomy_menu_delete_all($vid) {
-	   $menu_terms = _taxonomy_menu_get_menu_terms($vid);
-	   if (!empty($menu_terms)) {
-	     foreach ($menu_terms as $tid => $mlid) {
-	       db_query('DELETE FROM {menu_links} WHERE mlid = %d', $mlid);
-	     }
-	     db_query('DELETE FROM {taxonomy_menu} WHERE vid = %d', $vid);
-	   }
-	 }
+  * Delete all links associated with this vocab from both the taxonomy_menu
+  * table and the menu_link table.
+  *
+  * @param $vid
+  *   vocabulary's id
+  */
+function _taxonomy_menu_delete_all($vid) {
+  $menu_terms = _taxonomy_menu_get_menu_items($vid);
+  if (!empty($menu_terms)) {
+  foreach ($menu_terms as $tid => $mlid) {
+    db_query('DELETE FROM {menu_links} WHERE mlid = %d', $mlid);
+    }
+    db_query('DELETE FROM {taxonomy_menu} WHERE vid = %d', $vid);
+  }
+}
+
+/**
+ * Get an array of the tid's related to the node
+ * 
+ * @param $nid
+ * @return array of tids
+ */
+function _taxonomy_menu_get_node_terms($nid) {
+  $output = array();
+  $result = db_query('SELECT tid FROM {term_node} WHERE nid = %d', $nid);
+  while ($data = db_fetch_object($result)) {
+    $output[] = $data->tid;
+  }
+  return $output;
+}
+
+/**
+ * Get an array of the tid's from the parent
+ * 
+ * @param $tid
+ * @return array of tid
+ */
+function _taxonomy_menu_get_parents($tid) {
+  $output = array();
+  $result = taxonomy_get_parents($tid);
+  foreach ($result as $key => $item) {
+    $output[] = $key;
+  }
+  return $output;  
+}

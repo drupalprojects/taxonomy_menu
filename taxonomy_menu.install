@@ -2,9 +2,8 @@
 // $Id$
 
 /**
- * @file taxonomy_menu.install
- * Install and uninstall all required databases.
- * Also do incremental database updates.
+ * @file
+ * Install and uninstall all required databases. Also do incremental database updates.
  */
 
 /**
@@ -60,7 +59,7 @@ function taxonomy_menu_schema() {
         'description' => t('vid for the tid'),
       ),
     ),
-    'primary key' => array('mlid','tid'),
+    'primary key' => array('mlid', 'tid'),
     'indexes' => array(
       'vid' => array('vid'),
     ),

@@ -3,3 +3,4 @@ core          = "6.x"
 dependency    = taxonomy
 description   = "Adds links to taxonomy terms to a menu."
 name          = "Taxonomy Menu"
+package       = Taxonomy Menu
