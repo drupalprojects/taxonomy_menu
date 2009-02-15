@@ -522,6 +522,13 @@ function _taxonomy_menu_item($item) {
   if (!($num == 0 && variable_get('taxonomy_menu_hide_empty', FALSE))) {
     // option to display the number of associated nodes
 
+    //if the ptid is 0 and there should be a vocab menu item then set the parent to the vocab menu item
+    $voc_item = variable_get('taxonomy_menu_voc_item_'. $term->vid, 0);
+    
+    if ($item['ptid'] == 0 && $voc_item) {
+      $ptid = _taxonomy_menu_get_mlid(0, $term['vid']);
+    }
+          
     $link = array(
       'link_title' => $item['name'],
       'menu_name' => $item['menu_name'],

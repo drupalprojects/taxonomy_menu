@@ -77,9 +77,12 @@ function taxonomy_menu_handler_default($op, $args = array()) {
     //if looking for the path, we expect to be sent the tid
     case 'path':
       $tid = $args['tid'];
-      //if tid = 0 then we are creating the vocab menu item
+      //if tid = 0 then we are creating the vocab menu item format will be taxonomy/term/$tid+$tid+$tid....
       if ($tid == 0) {
-        return "taxonomy/term/$vid";
+        //get all of the terms for the vocab
+        $vtids = _taxonomy_menu_defaults_get_terms($args['vid']);
+        $end = implode('+',$vtids);
+        return "taxonomy/term/$end"; 
       }
       else {
         return "taxonomy/term/$tid";
@@ -112,7 +115,6 @@ function taxonomy_menu_handler_default($op, $args = array()) {
       }
       else {
         $term = $args['term'];
-        $voc_item = variable_get('taxonomy_menu_voc_item_'. $term->vid, 0);
       }
 
        // get the first parent
@@ -124,11 +126,6 @@ function taxonomy_menu_handler_default($op, $args = array()) {
       }
       else {
         $ptid = $term->parents;
-      }
-
-      //if the ptid is 0 and there should be a vocab menu item then set the parent to the vocab menu item
-      if ($ptid == 0 && $voc_item) {
-        $ptid = _taxonomy_menu_get_mlid(0, $term->vid);
       }
 
       // turn the term into the correct $item array form
@@ -160,4 +157,19 @@ function taxonomy_menu_handler_default($op, $args = array()) {
   */
 function _taxonomy_menu_defaults_delete_item($tid) {
   db_query('DELETE FROM {taxonomy_menu} WHERE tid = %d', $tid);
+}
+
+/**
+ * Get all of the tid for a give vid
+ * 
+ * @param $vid
+ * @return array of $tid
+ */
+function _taxonomy_menu_defaults_get_terms($vid) {
+  $output = array();
+  $result = db_query('SELECT tid FROM {term_data} WHERE vid = %d', $vid);
+  while ($data = db_fetch_object($result)) {
+    $output[] = $data->tid;
+  }
+  return $output;
 }
