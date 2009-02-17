@@ -58,7 +58,7 @@ function taxonomy_menu_taxonomy_menu_handlers($op) {
  *    'vid' => the vocabulary's id
  *    'ptid' => the term's parent's term id.  use 0 for vocab
  *    'menu_name' => the menu that the link item will be inserted into
- *    'path_type' => either term, tid or vid.  This is what will be pased to the path function
+ *    'path_type' => either term, tid or vid.  This is what will be pased to the path function This must be a key of the array also.
  *  if $op == 'delete' then array('tid' => TermID) OR ('link_path' => path to menu item)
  *  if $op == 'update' then
  *   array with the following key/value pairs:
@@ -81,7 +81,7 @@ function taxonomy_menu_handler_default($op, $args = array()) {
       if ($tid == 0) {
         //get all of the terms for the vocab
         $vtids = _taxonomy_menu_defaults_get_terms($args['vid']);
-        $end = implode('+',$vtids);
+        $end = implode(' ',$vtids);
         return "taxonomy/term/$end"; 
       }
       else {
@@ -117,7 +117,7 @@ function taxonomy_menu_handler_default($op, $args = array()) {
         $term = $args['term'];
       }
 
-       // get the first parent
+      // get the first parent
       if (is_array($term->parents)) {
         foreach ($term->parents as $key => $val) {
           $ptid = $val;
@@ -149,7 +149,7 @@ function taxonomy_menu_handler_default($op, $args = array()) {
 }
 
 /**
-  * Delete all row from {taxomony_maneu} associated with this tid
+  * Delete all rows from {taxomony_menu} associated with this tid
   *
   *
   * @param $vid
@@ -160,8 +160,8 @@ function _taxonomy_menu_defaults_delete_item($tid) {
 }
 
 /**
- * Get all of the tid for a give vid
- * 
+ * Get all of the tid for a given vid
+ *
  * @param $vid
  * @return array of $tid
  */
