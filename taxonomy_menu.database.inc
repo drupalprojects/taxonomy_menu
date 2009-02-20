@@ -96,3 +96,28 @@ function _taxonomy_menu_get_parents($tid) {
   }
   return $output;  
 }
+
+/**
+  * Delete all rows from {taxomony_menu} associated with this tid
+  *
+  * @param $vid
+  * @param $tid
+  */
+function _taxonomy_menu_delete_item($vid, $tid) {
+  db_query('DELETE FROM {taxonomy_menu} WHERE vid = %d AND tid = %d', $vid, $tid);
+}
+
+/**
+ * Get all of the tid for a given vid
+ *
+ * @param $vid
+ * @return array of $tid
+ */
+function _taxonomy_menu_get_terms($vid) {
+  $output = array();
+  $result = db_query('SELECT tid FROM {term_data} WHERE vid = %d', $vid);
+  while ($data = db_fetch_object($result)) {
+    $output[] = $data->tid;
+  }
+  return $output;
+}
