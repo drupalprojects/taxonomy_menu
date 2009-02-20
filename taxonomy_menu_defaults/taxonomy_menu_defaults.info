@@ -1,6 +1,0 @@
-; $Id$
-core          = "6.x"
-dependency    = taxonomy_menu
-description   = "Default Handlers for Taxonomy Menu."
-name          = "Taxonomy Menu Default Hanlders"
-package       = Taxonomy Menu
