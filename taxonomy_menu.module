@@ -49,45 +49,15 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#options' => $paths,
       '#description' => t('If Default is selected then the path is taxonomy/term/tid ... <br />
         If Hierarchy is selected then the path is vid/tid/tid/tid... <br />
-        The menu path will be pased through the l() function so all aliases will be applied'
+        The menu path will be pased through drupal_get_path_alias() function so all aliases will be applied'
       ),
     );
-    if (!module_exists('token')) {
-      $form['taxonomy_menu']['menu_base'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Base Path'),
-        '#default_value' => variable_get('taxonomy_menu_base_'. $form['vid']['#value'], 'category'),
-        '#description' => t('Base path if "Heirarchy" is selected.')
-      );
-    }
-    else {
-      $form['taxonomy_menu']['token'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Token Patterns'),
-        '#collapsible' => TRUE,
-        '#description' => t('If this information is filled in then it will override the Menu Path'),
-      );
-      $form['taxonomy_menu']['token_vocab_path'] = array(
-        '#type' => 'textbox',
-        '#title' => t('Vocabulary Path'),
-        '#default' => variable_get('taxonomy_menu_token_vocab_path_'. $form['vid']['#value'], FALSE),
-      );
-      $form['taxonomy_menu']['token_term_path'] = array(
-        '#type' => 'textbox',
-        '#title' => t('Term Path'),
-        '#default' => variable_get('taxonomy_menu_token_term_path_'. $form['vid']['#value'], FALSE),
-      );
-      //help for token
-      $form['taxonomy_menu']['token_help'] = array(
-        '#title' => t('Replacement patterns'),
-        '#type' => 'fieldset',
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-      );
-      $form['view']['token_help']['help'] = array(
-        '#value' => theme('token_help', 'taxonomy'),
-      );
-    }
+    $form['taxonomy_menu']['menu_base'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Base Path'),
+      '#default_value' => variable_get('taxonomy_menu_base_'. $form['vid']['#value'], 'category'),
+      '#description' => t('Base path if "Heirarchy" is selected.')
+    );
     //options fieldset
     $form['taxonomy_menu']['options'] = array(
       '#type' => 'fieldset',
@@ -446,7 +416,7 @@ function _taxonomy_menu_save($item) {
   //creat the path.
   //use url to create he inital path
   //we need to remove the first '/' so menu_link_save will work correctly
-  $path = taxonomy_menu_create_path($item['vid'], $item['tid']);
+  $path = drupal_get_path_alias(taxonomy_menu_create_path($item['vid'], $item['tid']));
 
   $link = array(
     'link_title' => $item['name'],
