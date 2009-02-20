@@ -416,7 +416,7 @@ function _taxonomy_menu_save($item) {
   //creat the path.
   //use url to create he inital path
   //we need to remove the first '/' so menu_link_save will work correctly
-  $path = drupal_get_path_alias(taxonomy_menu_create_path($item['vid'], $item['tid']));
+  $path = taxonomy_menu_create_path($item['vid'], $item['tid']);
 
   $link = array(
     'link_title' => $item['name'],
@@ -525,10 +525,13 @@ function taxonomy_menu_path_default($vid, $tid) {
     //get all of the terms for the vocab
     $vtids = _taxonomy_menu_get_terms($vid);
     $end = implode(' ', $vtids);
-    return "taxonomy/term/$end";
+    $path = "taxonomy/term/$end";
   }
-
-  return "taxonomy/term/$tid";
+  else {
+    $path = "taxonomy/term/$tid";
+  }
+  
+  return drupal_get_path_alias($path);
 }
 
 /**
