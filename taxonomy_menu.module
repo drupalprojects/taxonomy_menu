@@ -333,6 +333,7 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
             $args = array(
               'term' => $term,
               'menu_name' => $menu_name,
+              'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
             );
             //since taxonomy_get_term does not return the parents, fetch them now
             $args['term']->parents = _taxonomy_menu_get_parents($term->tid);

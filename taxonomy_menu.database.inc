@@ -60,8 +60,8 @@ function _taxonomy_menu_get_menu_items($vid) {
 function _taxonomy_menu_delete_all($vid) {
   $menu_terms = _taxonomy_menu_get_menu_items($vid);
   if (!empty($menu_terms)) {
-  foreach ($menu_terms as $tid => $mlid) {
-    db_query('DELETE FROM {menu_links} WHERE mlid = %d', $mlid);
+    foreach ($menu_terms as $tid => $mlid) {
+      db_query('DELETE FROM {menu_links} WHERE mlid = %d', $mlid);
     }
     db_query('DELETE FROM {taxonomy_menu} WHERE vid = %d', $vid);
   }
