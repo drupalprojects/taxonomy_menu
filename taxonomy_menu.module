@@ -48,15 +48,8 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#default_value' => variable_get('taxonomy_menu_path_'. $form['vid']['#value'], 0),
       '#options' => $paths,
       '#description' => t('If Default is selected then the path is taxonomy/term/tid ... <br />
-        If Hierarchy is selected then the path is vid/tid/tid/tid... <br />
         The menu path will be pased through drupal_get_path_alias() function so all aliases will be applied'
       ),
-    );
-    $form['taxonomy_menu']['menu_base'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Base Path'),
-      '#default_value' => variable_get('taxonomy_menu_base_'. $form['vid']['#value'], 'category'),
-      '#description' => t('Base path if "Heirarchy" is selected.')
     );
     //options fieldset
     $form['taxonomy_menu']['options'] = array(
@@ -503,17 +496,8 @@ function taxonomy_menu_create_path($vid, $tid) {
  *  a list of the path options.
  */
 function taxonomy_menu_taxonomy_menu_path() {
-  $output = array(
-    'taxonomy_menu_path_default' => t('Default'),
-  //  'taxonomy_menu_path_hierarchy' => t('Hierarchy'), @TODO
-  );
+  $output = array('taxonomy_menu_path_default' => t('Default'));
 
-  /**
-  //if the token module exists then add a token options @TODO
-  if (module_exists('token')) {
-    $output['taxonomy_menu_path_token'] = t('Token Pattern');
-  }
-  */
   return $output;
 }
 
