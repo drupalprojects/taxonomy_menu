@@ -121,3 +121,51 @@ function _taxonomy_menu_get_terms($vid) {
   }
   return $output;
 }
+
+/**
+ * copy of taxonomy_term_count_nodes
+ * this function is used so we do not pull the cache results
+ * 
+ * @param $tid
+ * @param $type
+ */
+function _taxonomy_menu_term_count_nodes($tid, $type = 0) {
+  //static $count; comment out to remove cache
+
+  if (!isset($count[$type])) {
+    // $type == 0 always evaluates TRUE if $type is a string
+    if (is_numeric($type)) {
+      $result = db_query(db_rewrite_sql('SELECT t.tid, COUNT(n.nid) AS c FROM {term_node} t INNER JOIN {node} n ON t.vid = n.vid WHERE n.status = 1 GROUP BY t.tid'));
+    }
+    else {
+      $result = db_query(db_rewrite_sql("SELECT t.tid, COUNT(n.nid) AS c FROM {term_node} t INNER JOIN {node} n ON t.vid = n.vid WHERE n.status = 1 AND n.type = '%s' GROUP BY t.tid"), $type);
+    }
+    $count[$type] = array();
+    while ($term = db_fetch_object($result)) {
+      $count[$type][$term->tid] = $term->c;
+    }
+  }
+  $children_count = 0;
+  foreach (_taxonomy_term_children($tid) as $c) {
+    $children_count += taxonomy_term_count_nodes($c, $type);
+  }
+  return $children_count + (isset($count[$type][$tid]) ? $count[$type][$tid] : 0);
+}
+
+/**
+ * copy of taxonomy_term_children
+ * this function is used so we do not pull the cache results
+ * @param $tid
+ * @return unknown_type
+ */
+function _taxonomy_menu_term_children($tid) {
+  //static $count;  comment out to remove cache
+  
+  if (!isset($children)) {
+    $result = db_query('SELECT tid, parent FROM {term_hierarchy}');
+    while ($term = db_fetch_object($result)) {
+      $children[$term->parent][] = $term->tid;
+    }
+  }
+  return isset($children[$tid]) ? $children[$tid] : array();
+}

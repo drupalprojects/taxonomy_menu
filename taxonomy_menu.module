@@ -294,13 +294,14 @@ function _taxonomy_menu_rebuild_link_items($vid, $update = TRUE) {
  * This hook enables the menu to be displayed in context during node views.
  */
 function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
-  static $old_terms;
+  static $terms_old;
 
   //if display numbers is on, update the menu item with the new name
   if ($op == 'update' || $op == 'insert' || $op == 'delete') {
-    //get the terms from the node.
-    $terms = $node->taxonomy;
-    $terms = array_merge((array)$terms, (array)$old_terms);
+    $terms_new = _taxonomy_menu_get_node_terms($node->nid);
+
+    //merge current terms and previous terms to update both menu items.
+    $terms = array_merge((array)$terms_new, (array)$terms_old);
     foreach ($terms as $key => $tid) {
       $term = taxonomy_get_term($tid);
       //update the menu for each term if necessary
@@ -346,7 +347,7 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
     //get the terms from the database before the changes are made.
     //these will be used to update the menu item's name if needed
     //we go directly to the db to bypass any caches
-    $old_terms = _taxonomy_menu_get_node_terms($node->nid);
+    $terms_old = _taxonomy_menu_get_node_terms($node->nid);
   }
 }
 
@@ -496,7 +497,9 @@ function taxonomy_menu_create_path($vid, $tid) {
  *  a list of the path options.
  */
 function taxonomy_menu_taxonomy_menu_path() {
-  $output = array('taxonomy_menu_path_default' => t('Default'));
+  $output = array(
+    'taxonomy_menu_path_default' => t('Default'),
+  );
 
   return $output;
 }
@@ -513,7 +516,7 @@ function taxonomy_menu_path_default($vid, $tid) {
     $path = "taxonomy/term/$end";
   }
   else {
-    $path = "taxonomy/term/$tid";
+    $path = taxonomy_term_path(taxonomy_get_term($tid));
   }
   
   return drupal_get_path_alias($path);
@@ -621,7 +624,7 @@ function _taxonomy_menu_item($item) {
   //if tid is 0 then do not chagne any settings
   if ($item['tid'] > 0) {
     //get the number of node attached to this term
-    $num = taxonomy_term_count_nodes($item['tid']);
+    $num = _taxonomy_menu_term_count_nodes($item['tid']);
 
     //if hide menu is selected and the term count is 0 then do not create the menu item
     if (variable_get('taxonomy_menu_hide_empty_terms_'. $item['vid'], FALSE) && $num == 0) {
