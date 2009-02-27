@@ -47,7 +47,7 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#title' => t('Menu Path Type'),
       '#default_value' => variable_get('taxonomy_menu_path_'. $form['vid']['#value'], 0),
       '#options' => $paths,
-      '#description' => t('If Default is selected then the path is taxonomy/term/tid ... <br />
+      '#description' => t('If Default is selected then the path is taxonomy/term/tid <br />
         The menu path will be pased through drupal_get_path_alias() function so all aliases will be applied'
       ),
     );
@@ -83,7 +83,8 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#type' => 'checkbox',
       '#title' => t('Item for Vocabulary'),
       '#default_value' => variable_get('taxonomy_menu_voc_item_'. $form['vid']['#value'], TRUE),
-      '#description' => t("Shall the vocabulary have it's own item"),
+      '#description' => t("Shall the vocabulary have it's own item.<br />
+        If these setting is changed then the menu is rebuilt."),
     );
     //auto expand the menu
     $form['taxonomy_menu']['options']['expanded'] = array(
@@ -121,10 +122,13 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
 
   $old_menu = variable_get('taxonomy_menu_vocab_'. $vid, FALSE);
   $new_menu = $form_state['values']['vocab_enabled'];
+  
+  $old_vocab_enabled = variable_get('taxonomy_menu_voc_item_'. $vid, FALSE);
+  $new_vocab_enabled = $form_state['values']['vocab_item_enabled'];
 
   // set options
   variable_set('taxonomy_menu_sync_'. $vid, $form_state['values']['vocab_sync']);
-  variable_set('taxonomy_menu_voc_item_'. $vid, $form_state['values']['vocab_item_enabled']);
+  variable_set('taxonomy_menu_voc_item_'. $vid, $new_vocab_enabled);
   variable_set('taxonomy_menu_display_num_'. $vid, $form_state['values']['vocab_item_num']);
   variable_set('taxonomy_menu_expanded_'. $vid, $form_state['values']['expanded']);
   variable_set('taxonomy_menu_path_'. $vid, $form_state['values']['menu_path']);
@@ -134,7 +138,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
   variable_set('taxonomy_menu_vocab_'. $vid, $new_menu);
 
   // only rebuild if the menu option has changed.
-  if ($form_state['values']['rebuild'] || !$old_menu) {
+  if ($form_state['values']['rebuild'] || ($old_menu != $new_menu) || ($old_vocab_enabled != $new_vocab_enabled)) {
     _taxonomy_menu_rebuild_link_items($vid, FALSE);
   }
   else {
@@ -464,14 +468,7 @@ function _taxonomy_menu_save($item) {
  *  path selections
  */
 function _taxonomy_menu_get_paths() {
-  $handlers = cache_get('taxonomy_menu_cache_path', 'cache');
-
-  if (!$handlers) {
-    $handlers = module_invoke_all('taxonomy_menu_path');
-    cache_set('taxonomy_menu_cache_path', $handlers);
-  }
-
-  return $handlers;
+  return module_invoke_all('taxonomy_menu_path');
 }
 
 /**
