@@ -109,13 +109,6 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
       }
     }
 
-    //if the base path has changed
-    if ($key = 'base_path') {
-      if (_taxonomy_menu_check_variable($variable_name, $value)) {
-        $changed_base_path = TRUE;
-      }      
-    }
-
     //if $changed is alreayd set to true, then don't bother checking any others
     if (!$changed) {
       //check to see if the variable has changed
@@ -127,12 +120,6 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
     variable_set($variable_name, $value);
   }
   
-  //if the base path has changed then rebuild the menu before you do anything else
-  //this is needed so the new path can be registered before menu_link_save is run
-  if ($changed_base_path) {
-    menu_rebuild;
-  }
-
   //if the menu hasn't changed and the menu is disabled then do not do anything else
   if ($form_state['values']['taxonomy_menu']['options']['rebuild'] ||
       $changed_menu || 
@@ -769,15 +756,6 @@ function taxonomy_menu_taxonomy_menu_options() {
     '#description' => t('Every time a term is added/deleted/modified, the corresponding menu link will be altered too.'),
     'default' => TRUE,
   );
-
-  if (module_exists('pathauto')) {
-    $options['base_path'] = array(
-      '#title' => t('Base Path'),
-      '#type' => 'textfield',
-      '#description' => t('Base Path if using Pathauto'),
-      'default' => t('category'),
-    );
-  }
 
   $options['display_num'] = array(
     '#title' => t('Display Number of Nodes'),
