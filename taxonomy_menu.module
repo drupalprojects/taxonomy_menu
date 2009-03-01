@@ -94,7 +94,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
   //set the path and check for changes
   $variable_name = _taxonomy_menu_build_variable('path', $vid);
   if (_taxonomy_menu_check_variable($variable_name, $form_state['values']['taxonomy_menu']['path'])) {
-    $changed = TRUE;
+    $changed_path = TRUE;
   }
   variable_set($variable_name, $form_state['values']['taxonomy_menu']['path']);
 
@@ -125,7 +125,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
       $changed_menu || 
       (!$changed_menu && variable_get('taxonomy_menu_vocab_menu_'. $vid, FALSE) == 0)) {
     //rebuild if rebuild is selected, menu has changed or vocabulary option changed
-    if ($form_state['values']['taxonomy_menu']['options']['rebuild'] || $changed_menu || $change_vocab_item) {
+    if ($form_state['values']['taxonomy_menu']['options']['rebuild'] || $changed_menu || $change_vocab_item || $changed_path) {
       $message = _taxonomy_menu_rebuild($vid);
     }
     //if setting has changed and a menu item is enabled, then update all of the menu items
