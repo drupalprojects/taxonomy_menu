@@ -18,16 +18,11 @@ function taxonomy_menu_uninstall() {
   variable_set('menu_rebuild_needed', TRUE);
 
   // Delete variables
-  foreach (taxonomy_get_vocabularies() as $vocabulary) {
-    variable_del('taxonomy_menu_sync_'. $vocabulary->vid);
-    variable_del('taxonomy_menu_voc_item_'. $vocabulary->vid);
-    variable_del('taxonomy_menu_display_num_'. $vocabulary->vid);
-    variable_del('taxonomy_menu_expanded_'. $vocabulary->vid);
-    variable_del('taxonomy_menu_path_'. $vocabulary->vid);
-    variable_del('taxonomy_menu_token_term_path_'. $vocabulary->vid);
-    variable_del('taxonomy_menu_token_vocab_path_'. $vocabulary->vid);
-    variable_del('taxonomy_menu_hide_empty_terms_'. $vocabulary->vid);
-    variable_del('taxonomy_menu_vocab_'. $vocabulary->vid);
+  $variables = db_query('SELECT * from variable');
+  while ($variable = db_fetch_object($variables)) {
+    if (strpos($variable->name, 'taxonomy_menu') !== FALSE) {
+      variable_del($variable->name);
+    }
   }
 
   // remove table
