@@ -47,34 +47,27 @@ Options:
   if using other modules to extend the menu functionality.
  
 
-VIEWS/PATHAUTO
-=========================
-This will enable the category/vid/tid/tid path but using the alias instead of the number.
+VIEWS WITHOUT USING DEFAULT PATH
+================================
+Order does not matter here since the menu router will already have an entry for 'taxonomy/term/%'
 
-1) Create a view.
-   * The first argument is $vid and the second is $tid and allow multiples.
-   * Create a page display with the path 'category/%' (or whatever you are going to use as the base of the path)
+Create a view.
+  * The first argument is $tid and allow multiples.
+  * Create a page display with the path 'taxonomy/term/%'
 
-2) Change the default path patterm for taxonomy on admin/build/path/pathauto to 'category/[vocab-raw]/[catpath-raw]'
-   Use the same base path that you did when you setup the view.
+HIERARCHY PATH
+==================================
+This should only be used if you have custom code or a block that relies on the category/vid/tid/tid/tid.
+If you would like the url to be this path, the recomendation is to use PathAuto with 'category/[vocab-raw]/[copath-raw]'.
    
-2) Bulk updated the alias at admin/build/path/pathauto.
-
-3) Edit the Vocabulary
-   * If you already have a menu then select 'Select to rebuild the menu on submit.' and press 'Save'
-   * If you haven't created a menu then do so now
-   
-Now the menu links will be created as category/<vocab name>/<term name>/<term name>/...
-The view will handle how the content is displayed.
-
 NOTES
 =====
+ * All Menu Items are Path Alias aware and compatible with PATHAUTO.
  * Taxonomy Menu does not handle the menu call backs.  It only creates the links to the menus.
- * The router item must be created before Taxonomy Menu creates the links.  Failure to so so
-   will cause the menu items to not be created.
+ * The router item must be created before Taxonomy Menu creates the links.  Failure to so so 
+    will cause the menu items to not be created.
  * Router items can be created by either a view or another modules hook_menu.
  * If using Path Auto, be sure that you have either a view or hook_menu setup to recive the callback.
-
-
-
-Advanced Breadcrumbs can be controled by Taxonomy Breadcrumb (http://drupal.org/project/taxonomy_breadcrumb)
+ * Advanced Breadcrumbs can be controled by Taxonomy Breadcrumb (http://drupal.org/project/taxonomy_breadcrumb)
+ * Changing the taxonomy default URL to match the custom Taxonomy Menu Path can
+    be controled by Taxonomy Redirect (http://drupal.org/project/taxonomy_redirect)
