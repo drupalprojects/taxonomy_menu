@@ -324,7 +324,7 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
     $terms_new = _taxonomy_menu_get_node_terms($node->nid);
 
     //merge current terms and previous terms to update both menu items.
-    $terms = array_merge((array)$terms_new, (array)$terms_old);
+    $terms = array_unique(array_merge((array)$terms_new, (array)$terms_old));
     foreach ($terms as $key => $tid) {
       $term = taxonomy_get_term($tid);
       //update the menu for each term if necessary
@@ -406,9 +406,9 @@ function taxonomy_menu_handler($op, $args = array(), $item = array()) {
   $item = module_invoke_all('taxonomy_menu_'. $op, $item);
 
   //update the menu and return the mlid if the remove element is not true
-  if (!$item['remove']) {
+ // if (!$item['remove']) {
     return _taxonomy_menu_save($item);
-  }
+ // }
 }
 
 /**
@@ -467,7 +467,11 @@ function _taxonomy_menu_save($item) {
       $link['has_children'] = 1;
     }
   }
-
+  
+  //if remove is true then set hidden to 1
+  if ($item['remove']) {
+    $link['hidden'] = 1;
+  }
   //save the menu item
   if ($mlid = menu_link_save($link)) {
     //if inserting a new menu item then insert a record into the table
