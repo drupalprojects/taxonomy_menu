@@ -1,0 +1,110 @@
+<?php
+
+// $id$
+
+/**
+* Implementation of hook_taxonomy_menu_options()
+*
+* @return array
+*  Uses the value to set the variable taxonomy_menu_<value>_$vid
+*  $options[value]
+*   default - optional.  this is what will be used if the varialbe is not set.  if empty then FALSE is used
+*   #title - required.
+*   any other form element
+*/
+function taxonomy_menu_views_taxonomy_menu_options() {
+
+  /**
+  // get a list of Views
+  foreach (views_get_all_views() as $view => $viewdata) {
+    $views[$view] = $viewdata->name;
+  }
+  
+  $options['taxonomy_menu_views_view'] = array(
+    '#title' => t('Name of View'),
+    '#type' => 'select',
+    '#weight' => -4,
+    '#options' => $views,
+    '#description' => t('Only used with a Custom View'),
+  ); */
+  $options['taxonomy_menu_views_depth'] = array(
+    '#title' => t('Display Depth in Custom View'),
+    '#weight' => -2,
+    '#description' => t('Only used with a Custom View.'),
+    'default' => '',
+    '#type' => 'textfield',
+  );
+  $options['taxonomy_menu_views_base_path'] = array(
+    '#title' => t('Base Path for Custom View'),
+    '#weight' => -3,
+    '#type' => 'textfield',
+    'default' => 'category',
+    '#description' => t('Only used with a Custom View'),
+  );
+
+  return $options;
+}
+
+/**
+ * Implementation of hook_taxonomy_menu_path()
+ */
+function taxonomy_menu_views_taxonomy_menu_path() {
+  $output = array(
+    'taxonomy_menu_views_path' => t('Custom View'),
+  );
+
+  return $output;
+}
+
+/**
+ * Callback for taxonomy_menu_path
+ */
+function taxonomy_menu_views_path($vid, $tid) {
+  $base_path = variable_get('taxonomy_menu_views_base_path', 'category');
+  $depth = variable_get('taxonomy_menu_views_depth', '');
+
+  //if tid = 0 then we are creating the vocab menu item format will be taxonomy/term/$tid+$tid+$tid....
+  if ($tid == 0) {
+    //get all of the terms for the vocab
+    $vtids = _taxonomy_menu_get_terms($vid);
+    $end = implode('+', $vtids);
+    $path = $base_path .'/'. $end;
+  }
+  else {
+    $path = $base_path .'/'. $tid;
+  }
+  
+  if ($depth) {
+    $path .= '/'. $depth;
+  }
+
+  return $path;
+}
+
+/**
+ * Implementation of hook_menu
+ *
+function taxonomy_menu_views_menu() {
+  $base_path = variable_get('taxonomy_menu_views_base_path', 'category');
+  
+  $items["$base_path/%"] = array(
+    'title' => 'Taxonomy Menu View',
+    'page callback' => 'taxonomy_menu_views_show_view',
+    'type' => MENU_CALLBACK,
+    'page arguments' => array(1),
+    'access callback' => 1,
+  );
+  
+  return $items;
+}
+
+function taxonomy_menu_views_show_view($tid) {
+  $term = taxonomy_get_term($tid);
+  $base_path = variable_get('taxonomy_menu_views_base_path', 'category');
+  
+  // Embed the views output into the page
+  $view = views_get_view(variable_get('taxonomy_menu_views_view_'. $term->vid, ''));
+  $output = $view->execute_display('embed', array($term->tid));
+  
+  return empty($output) ? t('No content for this category.') : $output;
+} */

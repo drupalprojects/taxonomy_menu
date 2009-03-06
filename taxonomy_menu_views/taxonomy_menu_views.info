@@ -1,0 +1,7 @@
+; $Id$
+core          = "6.x"
+dependencies[] = taxonomy
+dependencies[] = taxonomy_menu
+description   = "Enables Hierarchy path to Taxonomy Menu"
+name          = "Taxonomy Menu Custom Views"
+package       = Taxonomy Menu
