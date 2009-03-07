@@ -236,8 +236,8 @@ function _taxonomy_menu_node_view(&$node, &$vocabs) {
    else {
      $path =  variable_get('taxonomy_menu_display_page', 'category') .'/'. $vid;
    }
-
-    $breadcrumb_items = array('path' => $path, 'title' => t(taxonomy_get_vocabulary($vid)->name)) +
+	$getvid = taxonomy_get_vocabulary($vid)->name;
+    $breadcrumb_items = array('path' => $path, 'title' => t($getvid->name)) +
                         _taxonomy_menu_get_term_breadcrumb_items($vocab[0], $path) +
                         array('path' => 'node/'. $node->nid, 'title' => $node->title);
 
