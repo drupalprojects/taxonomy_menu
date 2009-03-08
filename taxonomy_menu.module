@@ -539,6 +539,18 @@ function taxonomy_menu_path_default($vid, $tid) {
   }
   else {
     $path = taxonomy_term_path(taxonomy_get_term($tid));
+    if (variable_get('taxonomy_menu_display_descendants_'. $vid, FALSE)) {
+      //we wait to run this instead of durning the if above
+      //because we only wan to run it once.  
+      $terms = taxonomy_get_tree($vid, $tid);
+      foreach ($terms as $term) {
+        $tids[] = $term->tid;
+      }
+      if ($tids) {
+        $end = implode(' ', $tids);
+        $path .= ' '. $end;
+      }
+    }
   }
 
   return $path;
@@ -646,7 +658,7 @@ function _taxonomy_menu_item($item) {
   //if tid is 0 then do not chagne any settings
   if ($item['tid'] > 0) {
     //get the number of node attached to this term
-    $num = _taxonomy_menu_term_count_nodes($item['tid']);
+    $num = _taxonomy_menu_term_count($item['tid']);
 
     //if hide menu is selected and the term count is 0 then do not create the menu item
     if (variable_get('taxonomy_menu_hide_empty_terms_'. $item['vid'], FALSE) && $num == 0) {
@@ -656,8 +668,20 @@ function _taxonomy_menu_item($item) {
 
     //if display number is selected and $num > 0 then change the title
     if (variable_get('taxonomy_menu_display_num_'. $item['vid'], FALSE)) {
-      $item['name'] .= " ($num)";
+      //if number > 0 and display decendants, then count all of the children
+      if (variable_get('taxonomy_menu_display_descendants_'. $item['vid'], FALSE)) {
+        /**$tids = _taxonomy_menu_term_count_nodes($item['tid']);
+        foreach($tids as $tid) {
+          $tid_count[] = (int) _taxonomy_menu_term_count_nodes($tid);
+        }
+        
+        if ($tid_count) {
+          $num = array_sum($tid_count);
+        }*/
+        $num = taxonomy_term_count_nodes($item['tid']);
+      }
     }
+    $item['name'] .= " ($num)";
   }
 
   return $item;
@@ -784,6 +808,11 @@ function taxonomy_menu_taxonomy_menu_options() {
     '#description' => t('Sets the expand setting to TRUE'),
     'default' => TRUE,
   );
-  
+
+  $options['display_descendants'] = array(
+    '#title' => t('Dispay Descendants'),
+    'default' => FALSE,
+  );
+
   return $options;
 }
