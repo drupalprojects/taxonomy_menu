@@ -650,6 +650,22 @@ function _taxonomy_menu_create_item($args = array()) {
 }
 
 /**
+ * Helper function to see if any of the children have any nodes
+ *
+ * @param $tid
+ * @param $vid
+ * @return boolean
+ */
+function _taxonomy_menu_children_has_nodes($tid, $vid) {
+  $children = taxonomy_get_children($tid, $vid);
+  foreach ($children as $tid => $term) {
+    if (_taxonomy_menu_term_count($tid) > 0) {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+/**
  * Helper function for insert and update hooks
  * @param $item
  * @return unknown_type
@@ -660,28 +676,23 @@ function _taxonomy_menu_item($item) {
     //get the number of node attached to this term
     $num = _taxonomy_menu_term_count($item['tid']);
 
-    //if hide menu is selected and the term count is 0 then do not create the menu item
-    if (variable_get('taxonomy_menu_hide_empty_terms_'. $item['vid'], FALSE) && $num == 0) {
-      $item['remove'] = TRUE;
-      return $item;
+    //if hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
+    if ($num == 0 &&
+        variable_get('taxonomy_menu_hide_empty_terms_'. $item['vid'], FALSE) &&
+        _taxonomy_menu_children_has_nodes($item['tid'], $item['vid'])) {
+
+        $item['remove'] = TRUE;
+        return $item;
     }
 
     //if display number is selected and $num > 0 then change the title
     if (variable_get('taxonomy_menu_display_num_'. $item['vid'], FALSE)) {
       //if number > 0 and display decendants, then count all of the children
       if (variable_get('taxonomy_menu_display_descendants_'. $item['vid'], FALSE)) {
-        /**$tids = _taxonomy_menu_term_count_nodes($item['tid']);
-        foreach($tids as $tid) {
-          $tid_count[] = (int) _taxonomy_menu_term_count_nodes($tid);
-        }
-        
-        if ($tid_count) {
-          $num = array_sum($tid_count);
-        }*/
         $num = taxonomy_term_count_nodes($item['tid']);
       }
+      $item['name'] .= " ($num)";
     }
-    $item['name'] .= " ($num)";
   }
 
   return $item;
