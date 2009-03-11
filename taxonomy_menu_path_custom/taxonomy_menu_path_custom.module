@@ -75,7 +75,7 @@ function taxonomy_menu_path_custom_path($vid, $tid) {
       }
     }
   }
-  if (isset($depth)) {
+  if ($depth != '') {
     $path .= '/'. $depth;
   }
 
