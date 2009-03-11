@@ -17,7 +17,9 @@ function taxonomy_menu_path_custom_taxonomy_menu_options() {
   $options['taxonomy_menu_path_custom_depth'] = array(
     '#title' => t('Display Depth in Custom Path'),
     '#weight' => -2,
-    '#description' => t('Only used with a Custom Path.'),
+    '#description' => t("Only used with a Custom Path. <br />
+	  To use depth the path in the view has to have the path of '<Base Path for Custom Path>/%/%' The two arguments must be 'Term ID (with depth)' and 'Depth Modifier'.<br />
+	  Have this view setup <b>before</b> you create this taxonomy menu. Otherwise leave this field empty!"),
     'default' => '',
     '#type' => 'textfield',
   );
@@ -26,7 +28,8 @@ function taxonomy_menu_path_custom_taxonomy_menu_options() {
     '#weight' => -3,
     '#type' => 'textfield',
     'default' => 'category',
-    '#description' => t('Only used with a Custom Path'),
+    '#description' => t("Only used with a Custom Path.<br />
+	  You need to have a view with path 'custom path/%' and an argument 'Term ID' <b>before</b> you create this taxonomy menu."),
   );
 
   return $options;
@@ -72,7 +75,7 @@ function taxonomy_menu_path_custom_path($vid, $tid) {
       }
     }
   }
-  if ($depth) {
+  if (isset($depth)) {
     $path .= '/'. $depth;
   }
 
