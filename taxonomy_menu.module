@@ -49,7 +49,7 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#default_value' => variable_get('taxonomy_menu_path_'. $form['vid']['#value'], 0),
       '#options' => $paths,
       '#description' => t('If Default is selected then the path is taxonomy/term/tid <br />
-        The menu path will be pased through drupal_get_path_alias() function so all aliases will be applied'
+        The menu path will be passed through drupal_get_path_alias() function so all aliases will be applied'
       ),
     );
     
@@ -62,7 +62,7 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#title' => t('Select to rebuild the menu on submit.'),
       '#default_value' => 0,
       '#weight' => 20,
-      '#description' => t('Rebuild the menu on submit.  Warning:  This will delete create all of the menu items.  Only use this option if you are experiencing issues.'),
+      '#description' => t('Rebuild the menu on submit.  Warning:  This will delete then re-create all of the menu items.  Only use this option if you are experiencing issues.'),
     );
     // move the buttons to the bottom of the form
     $form['delete']['#weight'] = 49;
@@ -698,7 +698,7 @@ function _taxonomy_menu_item($item) {
   return $item;
 }
 /**
- * Implementation of hook_taxonomy_menu_insert()
+ * Implementation of hook_taxonomy_menu_insert().
  *
  * @param $item
  *  array with the following key/value pairs:
@@ -717,7 +717,7 @@ function taxonomy_menu_taxonomy_menu_insert($item) {
 }
 
 /**
- * Implementation of hook_taxonomy_menu_update()
+ * Implementation of hook_taxonomy_menu_update().
  *
  * @param $item
  *  array with the following key/value pairs:
@@ -738,7 +738,7 @@ function taxonomy_menu_taxonomy_menu_update($item) {
 
 /**
  * Used to create a form array of taxonomy menu options
- * invokes hook_taxonomy_menu_options
+ * invokes hook_taxonomy_menu_options().
  *
  * @return $form array
  */
@@ -779,7 +779,7 @@ function _taxonomy_menu_build_variable($name, $vid) {
 }
 
 /**
- * Implementation of hook_taxonomy_menu_options()
+ * Implementation of hook_taxonomy_menu_options().
  * 
  * @return array
  *  Uses the value to set the variable taxonomy_menu_<value>_$vid
@@ -798,10 +798,10 @@ function taxonomy_menu_taxonomy_menu_options() {
 
   $options['display_num'] = array(
     '#title' => t('Display Number of Nodes'),
-    '#description' => t('Dipslay the number of Items per taxonomy Terms.  Will not show up for vocabulary menu items.'),
+    '#description' => t('Display the number of Items per taxonomy Terms.  Will not show up for vocabulary menu items.'),
     'default' => FALSE,
   );
- 
+
   $options['hide_empty_terms'] = array(
     '#title' => t('Hide Empty Terms'),
     '#description' => t('Hide terms with no nodes attached to them.'),
@@ -821,7 +821,7 @@ function taxonomy_menu_taxonomy_menu_options() {
   );
 
   $options['display_descendants'] = array(
-    '#title' => t('Dispay Descendants'),
+    '#title' => t('Display Descendants'),
     'default' => FALSE,
   );
 

@@ -1,17 +1,18 @@
 <?php
 
-// $id$
+// $Id$
 
 /**
-* Implementation of hook_taxonomy_menu_options()
-*
-* @return array
-*  Uses the value to set the variable taxonomy_menu_<value>_$vid
-*  $options[value]
-*   default - optional.  this is what will be used if the varialbe is not set.  if empty then FALSE is used
-*   #title - required.
-*   any other form element
-*/
+ * @file
+ * Implementation of hook_taxonomy_menu_options().
+ *
+ * @return array
+ *  Uses the value to set the variable taxonomy_menu_<value>_$vid
+ *  $options[value]
+ *   default - optional.  this is what will be used if the varialbe is not set.  if empty then FALSE is used
+ *   #title - required.
+ *   any other form element
+ */
 function taxonomy_menu_path_custom_taxonomy_menu_options() {
 
   $options['taxonomy_menu_path_custom_depth'] = array(
@@ -19,7 +20,7 @@ function taxonomy_menu_path_custom_taxonomy_menu_options() {
     '#weight' => -2,
     '#description' => t("Only used with a Custom Path. <br />
 	  To use depth the path in the view has to have the path of '<Base Path for Custom Path>/%/%' The two arguments must be 'Term ID (with depth)' and 'Depth Modifier'.<br />
-	  Have this view setup <b>before</b> you create this taxonomy menu. Otherwise leave this field empty!"),
+	  Have this view setup <strong>before</strong> you create this taxonomy menu. Otherwise leave this field empty!"),
     'default' => '',
     '#type' => 'textfield',
   );
@@ -29,14 +30,14 @@ function taxonomy_menu_path_custom_taxonomy_menu_options() {
     '#type' => 'textfield',
     'default' => 'category',
     '#description' => t("Only used with a Custom Path.<br />
-	  You need to have a view with path 'custom path/%' and an argument 'Term ID' <b>before</b> you create this taxonomy menu."),
+	  You need to have a view with path 'custom path/%' and an argument 'Term ID' <strong>before</strong> you create this taxonomy menu."),
   );
 
   return $options;
 }
 
 /**
- * Implementation of hook_taxonomy_menu_path()
+ * Implementation of hook_taxonomy_menu_path().
  */
 function taxonomy_menu_path_custom_taxonomy_menu_path() {
   $output = array(
@@ -64,7 +65,7 @@ function taxonomy_menu_path_custom_path($vid, $tid) {
     $path = $base_path .'/'. $tid;
     if (variable_get('taxonomy_menu_display_descendants_'. $vid, FALSE)) {
       //we wait to run this instead of durning the if above
-      //because we only wan to run it once.  
+      //because we only wan to run it once.
       $terms = taxonomy_get_tree($vid, $tid);
       foreach ($terms as $term) {
         $tids[] = $term->tid;

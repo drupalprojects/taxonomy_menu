@@ -40,7 +40,7 @@ function taxonomy_menu_hierarchy_path_hierarchy($vid, $tid) {
 }
 
 /**
- * Implementation of hook_taxonomy_menu_options()
+ * Implementation of hook_taxonomy_menu_options().
  * 
  * @return array
  *  Uses the value to set the variable taxonomy_menu_<value>_$vid
