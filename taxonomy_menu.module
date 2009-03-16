@@ -65,8 +65,8 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#description' => t('Rebuild the menu on submit.  Warning:  This will delete then re-create all of the menu items.  Only use this option if you are experiencing issues.'),
     );
     // move the buttons to the bottom of the form
-    $form['delete']['#weight'] = 49;
-    $form['submit']['#weight'] = 50;
+    $form['submit']['#weight'] = 49;
+    $form['delete']['#weight'] = 50;
 
     // add an extra submit handler to save these settings
     $form['#submit'][] = 'taxonomy_menu_vocab_submit';
@@ -439,7 +439,7 @@ function _taxonomy_menu_save($item) {
   $path = taxonomy_menu_create_path($item['vid'], $item['tid']);
 
   $link = array(
-    'link_title' => $item['name'],
+    'link_title' => t($item['name']),
     'menu_name' => $item['menu_name'],
     'plid' => _taxonomy_menu_get_mlid($item['ptid'], $item['vid']),
     'options' => array('attributes' => array('title' => t($item['description']))),
