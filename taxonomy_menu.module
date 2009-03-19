@@ -630,18 +630,10 @@ function _taxonomy_menu_create_item($args = array()) {
   if (empty($ptid)) {
     $ptid = 0;
   }
-
-  //get tid for the langauge
-  if (module_exists('i18ntaxonomy')) {
-    $tid = i18ntaxonomy_translation_term_tid($term->tid);
-  }
-  else {
-    $tid = $term->tid;
-  }
   
   // turn the term into the correct $item array form
   $item = array(
-    'tid' => $tid,
+    'tid' => $term->tid,
     'name' => t($term->name),
     'description' => t($term->description),
     'weight' => $term->weight,
