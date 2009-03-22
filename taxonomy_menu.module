@@ -455,14 +455,6 @@ function _taxonomy_menu_save($item) {
     $insert = FALSE;
   }
 
-  //integration for I18n
-  if (module_exists('i18nmenu') && module_exists('i18ntaxonomy')) {
-    $langauge = i18ntaxonomy_term_get_translations(array('tid' => $item['tid']), FALSE);
-    foreach ($langauge as $lang => $data) {
-      $link['language'] = $lang;
-    }
-  }
-
   //set the has_children property
   //if tid=0 then adding a vocab item and had children
   //if the term has any children then set it to true
