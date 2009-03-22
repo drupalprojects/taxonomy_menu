@@ -35,14 +35,25 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#weight' => 10,
       '#tree' => TRUE,
     );
+    
     //this turns the vocab terms into menu items
-    $form['taxonomy_menu']['vocab_menu'] = array(
+    $menu_items = menu_parent_options(menu_get_menus(), $item);
+    array_unshift($menu_items, '= DISABLED =');
+
+    $default = variable_get('taxonomy_menu_vocab_menu_'. $form['vid']['#value'], NULL) . ':' . 
+               variable_get('taxonomy_menu_vocab_parent_'. $form['vid']['#value'], NULL);   
+    if (!isset($menu_items[$default])) {
+      $default = 0;
+    }
+    $form['taxonomy_menu']['vocab_parent'] = array(
       '#type' => 'select',
-      '#title' => t('Menu'),
-      '#default_value' => variable_get('taxonomy_menu_vocab_menu_'. $form['vid']['#value'], FALSE),
-      '#options' => $menus,
-      '#description' => t('With this option enabled, an entry will be created in the menu system for this vocabulary.')
+      '#title' => t('Menu location'),
+      '#default_value' => $default,
+      '#options' => $menu_items,
+      '#description' => t('The menu and parent under which to insert taxonomy menu items.'),
+      '#attributes' => array('class' => 'menu-title-select'),
     );
+    
     $form['taxonomy_menu']['path'] = array(
       '#type' => 'select',
       '#title' => t('Menu Path Type'),
@@ -84,12 +95,22 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
   $vid = $form_state['values']['vid'];
   $changed = FALSE;
   
+  // Split the menu location into menu name and menu item id.
+  list($vocab_parent['vocab_menu'], $vocab_parent['vocab_parent']) = explode(':', $form_state['values']['taxonomy_menu']['vocab_parent']);
+  
   //set the menu name and check for changes
   $variable_name = _taxonomy_menu_build_variable('vocab_menu', $vid);
-  if (_taxonomy_menu_check_variable($variable_name, $form_state['values']['taxonomy_menu']['vocab_menu'])) {
+  if (_taxonomy_menu_check_variable($variable_name, $vocab_parent['vocab_menu'])) {
     $changed_menu = TRUE;
   }
-  variable_set($variable_name, $form_state['values']['taxonomy_menu']['vocab_menu']);
+  variable_set($variable_name, $vocab_parent['vocab_menu']);
+  
+  // set the menu parent item and check for changes
+  $variable_name = _taxonomy_menu_build_variable('vocab_parent', $vid);
+  if (_taxonomy_menu_check_variable($variable_name, $vocab_parent['vocab_parent'])) {
+    $changed_menu = TRUE;
+  }
+  variable_set($variable_name, $vocab_parent['vocab_parent']);
   
   //set the path and check for changes
   $variable_name = _taxonomy_menu_build_variable('path', $vid);
@@ -437,11 +458,19 @@ function _taxonomy_menu_save($item) {
   //use url to create he inital path
   //we need to remove the first '/' so menu_link_save will work correctly
   $path = taxonomy_menu_create_path($item['vid'], $item['tid']);
+  // get the parent mlid: this is either:
+  // - the parent tid's mlid
+  // - the vocab menu item's mlid
+  // - the menu parent setting for this vocab
+  $plid = _taxonomy_menu_get_mlid($item['ptid'], $item['vid']);
+  if (!$plid) {
+    $plid = variable_get('taxonomy_menu_vocab_parent_'. $item['vid'], NULL);
+  }
 
   $link = array(
     'link_title' => t($item['name']),
     'menu_name' => $item['menu_name'],
-    'plid' => _taxonomy_menu_get_mlid($item['ptid'], $item['vid']),
+    'plid' => $plid,
     'options' => array('attributes' => array('title' => t($item['description']))),
     'weight' => $item['weight'],
     'module' => 'taxonomy_menu',
