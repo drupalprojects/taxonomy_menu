@@ -75,7 +75,7 @@ function _taxonomy_menu_delete_all($vid) {
  */
 function _taxonomy_menu_get_node_terms($nid) {
   $output = array();
-  $result = db_query(db_rewrite_sql('SELECT tid FROM {term_node} WHERE nid = %d', $nid));
+  $result = db_query('SELECT tid FROM {term_node} WHERE nid = %d', $nid);
   while ($data = db_fetch_object($result)) {
     $output[] = $data->tid;
   }
@@ -115,7 +115,7 @@ function _taxonomy_menu_delete_item($vid, $tid) {
  */
 function _taxonomy_menu_get_terms($vid) {
   $output = array();
-  $result = db_query(db_rewrite_sql('SELECT tid FROM {term_data} WHERE vid = %d', $vid));
+  $result = db_query('SELECT tid FROM {term_data} WHERE vid = %d', $vid);
   while ($data = db_fetch_object($result)) {
     $output[] = $data->tid;
   }
