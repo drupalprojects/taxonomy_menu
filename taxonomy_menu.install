@@ -40,6 +40,7 @@ function taxonomy_menu_install() {
  * Implementation of hook_schema().
  */
 function taxonomy_menu_schema() {
+
   $schema['taxonomy_menu'] = array(
     'description' => t('Links a taxonomy term to a menu item'),
     'fields' => array(

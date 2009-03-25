@@ -43,7 +43,7 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#options' => $menus,
       '#description' => t('With this option enabled, an entry will be created in the menu system for this vocabulary.')
     );
-    
+
     $form['taxonomy_menu']['path'] = array(
       '#type' => 'select',
       '#title' => t('Menu Path Type'),
@@ -53,11 +53,11 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
         The menu path will be passed through drupal_get_path_alias() function so all aliases will be applied'
       ),
     );
-    
+
     //get taxonomy menu form options
     $form['taxonomy_menu']['options'] = _taxonomy_menu_create_options($form['vid']['#value']);
 
-    //rebuild the menu  
+    //rebuild the menu
     $form['taxonomy_menu']['options']['rebuild'] = array(
       '#type' => 'checkbox',
       '#title' => t('Select to rebuild the menu on submit.'),
@@ -84,14 +84,14 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
 function taxonomy_menu_vocab_submit($form, &$form_state) {
   $vid = $form_state['values']['vid'];
   $changed = FALSE;
-  
+
   //set the menu name and check for changes
   $variable_name = _taxonomy_menu_build_variable('vocab_menu', $vid);
   if (_taxonomy_menu_check_variable($variable_name, $form_state['values']['taxonomy_menu']['vocab_menu'])) {
     $changed_menu = TRUE;
   }
   variable_set($variable_name, $form_state['values']['taxonomy_menu']['vocab_menu']);
-  
+
   //set the path and check for changes
   $variable_name = _taxonomy_menu_build_variable('path', $vid);
   if (_taxonomy_menu_check_variable($variable_name, $form_state['values']['taxonomy_menu']['path'])) {
@@ -120,10 +120,10 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
     //save variable
     variable_set($variable_name, $value);
   }
-  
+
   //if the menu hasn't changed and the menu is disabled then do not do anything else
   if ($form_state['values']['taxonomy_menu']['options']['rebuild'] ||
-      $changed_menu || 
+      $changed_menu ||
       (!$changed_menu && variable_get('taxonomy_menu_vocab_menu_'. $vid, FALSE) == 0)) {
     //rebuild if rebuild is selected, menu has changed or vocabulary option changed
     if ($form_state['values']['taxonomy_menu']['options']['rebuild'] || $changed_menu || $change_vocab_item || $changed_path) {
@@ -133,7 +133,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
     elseif ($changed && variable_get('taxonomy_menu_vocab_menu_'. $vid, FALSE)) {
       $message = _taxonomy_menu_update_link_items($vid);
     }
-  
+
     //do a full menu rebuild incase we have removed the menu or moved it between menus
     variable_set('menu_rebuild_needed', TRUE);
     drupal_set_message($message, 'status');
@@ -142,7 +142,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
 
 /**
  * rebuilds a menu
- * 
+ *
  * @param $vid
  * @return $message
  *  message that is displayed
@@ -157,12 +157,12 @@ function _taxonomy_menu_rebuild($vid) {
     return t('The Taxonomy Menu has been rebuilt');
   }
 
-  return t('The Taxonomy Menu has been removed');  
+  return t('The Taxonomy Menu has been removed');
 }
 
 /**
  * Checks to see if the variable has changed.
- * 
+ *
  * @param $variable
  *  name of variable
  * @return Boolean
@@ -187,8 +187,8 @@ function _taxonomy_menu_update_link_items($vid) {
 
   //get a list of the current menu links
   $menu_links = _taxonomy_menu_get_terms($vid);
-  
-  //cycle through the 
+
+  //cycle through the
   foreach ($menu_links as $menu_link) {
     if ($menu_link->tid == 0) {
       $args['vid'] = $menu_link->vid;
@@ -199,11 +199,11 @@ function _taxonomy_menu_update_link_items($vid) {
 
     //set the mneu name
     $args['menu_name'] = $menu_name;
-    
+
     //update the menu link
     taxonomy_menu_handler('update', $args);
   }
-  
+
   return t("The Taxonomy Menu $menu_name has been updated.");
 }
 
@@ -232,7 +232,7 @@ function _taxonomy_menu_insert_link_items($vid) {
     );
 
     $mlid = taxonomy_menu_handler('insert', $args);
-  }    
+  }
 }
 /**
  * Implementation of hook_taxonomy().
@@ -468,7 +468,7 @@ function _taxonomy_menu_save($item) {
       $link['has_children'] = 1;
     }
   }
-  
+
   //if remove is true then set hidden to 1
   if ($item['remove']) {
     $link['hidden'] = 1;
@@ -542,7 +542,7 @@ function taxonomy_menu_path_default($vid, $tid) {
     $path = taxonomy_term_path(taxonomy_get_term($tid));
     if (variable_get('taxonomy_menu_display_descendants_'. $vid, FALSE)) {
       //we wait to run this instead of durning the if above
-      //because we only wan to run it once.  
+      //because we only wan to run it once.
       $terms = taxonomy_get_tree($vid, $tid);
       foreach ($terms as $term) {
         $tids[] = $term->tid;
@@ -632,14 +632,6 @@ function _taxonomy_menu_create_item($args = array()) {
     $ptid = 0;
   }
 
-  //get tid for the langauge
-  if (module_exists('i18ntaxonomy')) {
-    $tid = i18ntaxonomy_translation_term_tid($term->tid);
-  }
-  else {
-    $tid = $term->tid;
-  }
-  
   // turn the term into the correct $item array form
   $item = array(
     'tid' => $tid,
@@ -762,15 +754,15 @@ function _taxonomy_menu_create_options($vid) {
     $variable_name = _taxonomy_menu_build_variable($field_name, $vid);
 
     //if the variable is set then use that, if the default key is set then use that, otherwise use false
-    $options[$field_name]['#default_value'] = 
-      variable_get($variable_name, 
+    $options[$field_name]['#default_value'] =
+      variable_get($variable_name,
       !empty($options[$field_name]['default']) ? $options[$field_name]['default'] : FALSE);
-      
+
     //set the type to checkbox if it is empty
     if (empty($options[$field_name]['#type'])) {
       $options[$field_name]['#type'] = 'checkbox';
     }
-    
+
     //set the option feildset values
     $options['#type'] = 'fieldset';
     $options['#title'] = t('Options');
@@ -779,19 +771,19 @@ function _taxonomy_menu_create_options($vid) {
     //remove the default value from the array so we don't pass it to the form
     unset($options[$field_name]['default']);
   }
-  
+
   return $options;
 }
 
 function _taxonomy_menu_build_variable($name, $vid) {
   $base_string = "taxonomy_menu_%s_$vid";
-  
+
   return sprintf($base_string, $name);
 }
 
 /**
  * Implementation of hook_taxonomy_menu_options().
- * 
+ *
  * @return array
  *  Uses the value to set the variable taxonomy_menu_<value>_$vid
  *  $options[value]
