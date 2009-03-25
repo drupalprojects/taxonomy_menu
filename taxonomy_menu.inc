@@ -118,12 +118,12 @@ function _taxonomy_menu_admin() {
  * Its the main function for this module.
  */
 function _taxonomy_menu_menu() {
-  /**
+  
   if (module_exists('pathauto')) {
     $pathauto_exists=true;
     _pathauto_include();
   }
-  **/
+  
 
   $items['admin/settings/taxonomy_menu'] = array(
     'access'              => user_access('administer site configuration'),
@@ -160,23 +160,23 @@ function _taxonomy_menu_menu() {
         'weight'          => $vocabulary->weight
       );
 
-      /**
+      
       if($pathauto_exists) {
         $placeholders = pathauto_get_placeholders('taxonomy', $vocabulary);
         $alias = pathauto_create_alias('taxonomy_menu', 'update', $placeholders, $path,$vocabulary->vid);
       }
-      **/
+      
 
       $tree = taxonomy_get_tree($vocabulary->vid);
       $old_depth = -1;
       $old_path = $path;
 
-      /**
+      
       if($pathauto_exists) {
         $placeholders = pathauto_get_placeholders('taxonomy', $term);
         $alias = pathauto_create_alias('taxonomy_menu', 'update', $placeholders, $path,$term->tid);
       }
-      **/
+      
 
       foreach ($tree as $term) {
         if ($term->depth <= $old_depth) {
