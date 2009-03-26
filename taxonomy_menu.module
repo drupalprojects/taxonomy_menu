@@ -634,7 +634,7 @@ function _taxonomy_menu_create_item($args = array()) {
 
   // turn the term into the correct $item array form
   $item = array(
-    'tid' => $tid,
+    'tid' => $term->tid,
     'name' => t($term->name),
     'description' => t($term->description),
     'weight' => $term->weight,
