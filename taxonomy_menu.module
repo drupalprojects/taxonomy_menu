@@ -321,51 +321,15 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
   static $terms_old;
 
   //if display numbers is on, update the menu item with the new name
-  if ($op == 'update' || $op == 'insert' || $op == 'delete') {
+  if ($op == 'update' || $op == 'insert') {
+    //we use this direct table pull to avoid the cache and because
+    //free tags are not formated in a matter where extrating the
+    //tid's is easy
     $terms_new = _taxonomy_menu_get_node_terms($node->nid);
 
     //merge current terms and previous terms to update both menu items.
     $terms = array_unique(array_merge((array)$terms_new, (array)$terms_old));
-    foreach ($terms as $key => $tid) {
-      $term = taxonomy_get_term($tid);
-      //update the menu for each term if necessary
-      $menu_name = variable_get('taxonomy_menu_vocab_menu_'. $term->vid, FALSE);
-      $vocb_sync = variable_get('taxonomy_menu_sync_'. $term->vid, TRUE);
-      $menu_num = variable_get('taxonomy_menu_display_num_' , $term->vid, FALSE);
-
-      if ($menu_name && $vocb_sync && $menu_num) {
-        switch ($op) {
-          case 'update':
-            //build argument array to save menu_item
-            $args = array(
-              'term' => $term,
-              'menu_name' => $menu_name,
-              'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
-            );
-            //since taxonomy_get_term does not return the parents, fetch them now
-            $args['term']->parents = _taxonomy_menu_get_parents($term->tid);
-            break;
-
-          case 'insert':
-            //build argument array to save menu_item
-            $args = array(
-              'term' => $term,
-              'menu_name' => $menu_name,
-              'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
-            );
-            //since taxonomy_get_term does not return the parents, fetch them now
-            $args['term']->parents = _taxonomy_menu_get_parents($term->tid);
-            break;
-
-          case 'delete':
-            $args = array(
-              'tid' => $term->tid,
-              'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
-            );
-        }
-        taxonomy_menu_handler($op, $args);
-      }
-    }
+    _taxonomy_menu_nodeadpi_helper($op, $terms);
   }
   elseif ($op == 'presave') {
     //get the terms from the database before the changes are made.
@@ -373,8 +337,61 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
     //we go directly to the db to bypass any caches
     $terms_old = _taxonomy_menu_get_node_terms($node->nid);
   }
+  elseif ($op == 'delete') {
+    //since the delete operation is run after the data is deleted
+    //pull the terms from the node object
+    $terms = array_keys($node->taxonomy);
+    _taxonomy_menu_nodeadpi_helper($op, $terms);    
+  }
 }
 
+/**
+ * Helper function to 
+ * @param $tids
+ * @return unknown_type
+ */
+function _taxonomy_menu_nodeadpi_helper($op, $terms = array()) {
+  foreach ($terms as $key => $tid) {
+    $term = taxonomy_get_term($tid);
+    //update the menu for each term if necessary
+    $menu_name = variable_get('taxonomy_menu_vocab_menu_'. $term->vid, FALSE);
+    $vocb_sync = variable_get('taxonomy_menu_sync_'. $term->vid, TRUE);
+    $menu_num = variable_get('taxonomy_menu_display_num_'. $term->vid, FALSE);
+    $hide_empty = variable_get('taxonomy_menu_hide_empty_terms_'. $term->vid, FALSE);
+    if ($menu_name && $vocb_sync && ($menu_num || $hide_empty)) {
+      switch ($op) {
+        case 'update':
+          //build argument array to save menu_item
+          $args = array(
+            'term' => $term,
+            'menu_name' => $menu_name,
+            'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
+          );
+          //since taxonomy_get_term does not return the parents, fetch them now
+          $args['term']->parents = _taxonomy_menu_get_parents($term->tid);
+          break;
+
+        case 'insert':
+          //build argument array to save menu_item
+          $args = array(
+            'term' => $term,
+            'menu_name' => $menu_name,
+            'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
+          );
+          //since taxonomy_get_term does not return the parents, fetch them now
+          $args['term']->parents = _taxonomy_menu_get_parents($term->tid);
+          break;
+
+        case 'delete':
+          $args = array(
+            'tid' => $term->tid,
+            'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
+          );
+      }
+      taxonomy_menu_handler($op, $args);
+    }
+  }
+}
 /**
  * HANDLING
  *
