@@ -473,6 +473,11 @@ function _taxonomy_menu_save($item) {
     $insert = FALSE;
   }
 
+//FIXME: i18nmenu need to be cleaned up to allow translation from other menu module
+  if (module_exists('i18nmenu')) {
+    $link['options']['alter'] = TRUE;
+  }
+
   //set the has_children property
   //if tid=0 then adding a vocab item and had children
   //if the term has any children then set it to true
@@ -625,6 +630,7 @@ function _taxonomy_menu_create_item($args = array()) {
       'vid' => $args['vid'],
       'ptid' => 0,
       'menu_name' => $args['menu_name'],
+      'language' => $vocab->language,
     );
 
     return $item;
@@ -658,6 +664,7 @@ function _taxonomy_menu_create_item($args = array()) {
     'vid' => $term->vid,
     'ptid' => $ptid,
     'menu_name' => $args['menu_name'],
+    'language' => $term->language,
   );
 
   if ($args['mlid']) {
@@ -846,4 +853,27 @@ function taxonomy_menu_taxonomy_menu_options() {
   );
 
   return $options;
+}
+
+
+/**
+ * Implementation of hook_translated_menu_link_alter().
+ *
+ * Translate menu links on the fly by using term translations.
+ *
+ */
+function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
+  if (module_exists('i18ntaxonomy')) {
+    //in case of localized terms, use term translation for menu title
+    if ($item['module'] == 'taxonomy_menu') {
+      //TODO: check vocabulary translation mode before tryring to translate: but is this really usefull ? 
+      //  if (i18ntaxonomy_vocabulary($vid) == I18N_TAXONOMY_LOCALIZE) {
+      $term = taxonomy_get_term(_taxonomy_menu_get_tid($item['mlid']));
+      if ($item['title'] != $term->name) {
+        //DEBUG: should never appends ?
+        drupal_set_message('Menu and taxonomy name mismatch : ' . $item['title'] . '!=' . $term->name, 'error');
+      }
+      $item['title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name);
+    }
+  }
 }

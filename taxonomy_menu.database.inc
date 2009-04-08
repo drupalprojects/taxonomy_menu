@@ -130,3 +130,13 @@ function _taxonomy_menu_get_terms($vid) {
 function _taxonomy_menu_term_count($tid) {
   return db_result(db_query(db_rewrite_sql('SELECT COUNT(n.nid) AS c FROM {term_node} t INNER JOIN {node} n ON t.vid = n.vid WHERE n.status = 1 AND t.tid = %d'), $tid));
 }
+
+/**
+ * Get tid for a given mlid
+ *
+ * @param $mlid
+ * @return $tid
+ */
+function _taxonomy_menu_get_tid($mlid) {
+  return db_result(db_query('SELECT tid FROM {taxonomy_menu} WHERE mlid = %d', $mlid));
+}
