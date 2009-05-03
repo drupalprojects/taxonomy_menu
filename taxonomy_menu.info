@@ -1,6 +1,5 @@
 ; $Id$
-core          = "6.x"
-dependencies[] = taxonomy
-description   = "Adds links to taxonomy terms to a menu."
+core          = "5.x"
 name          = "Taxonomy Menu"
-package       = Taxonomy Menu
+dependencies  = taxonomy
+description   = "Adds links to taxonomy terms to the global navigation menu."
