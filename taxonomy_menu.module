@@ -421,7 +421,11 @@ function taxonomy_menu_handler($op, $args = array(), $item = array()) {
   }
 
   //let other modules make edits
-  $item = module_invoke_all('taxonomy_menu_'. $op, $item);
+  $hook = 'taxonomy_menu_'. $op;
+  foreach (module_implements($hook) as $module) {
+    $function = $module .'_'. $hook;
+    $function($item);
+  }
 
   //update the menu and return the mlid if the remove element is not true
  // if (!$item['remove']) {
@@ -739,8 +743,8 @@ function _taxonomy_menu_item($item) {
  *
  * @return $item
  */
-function taxonomy_menu_taxonomy_menu_insert($item) {
-  return _taxonomy_menu_item($item);
+function taxonomy_menu_taxonomy_menu_insert(&$item) {
+  $item = _taxonomy_menu_item($item);
 }
 
 /**
@@ -757,10 +761,9 @@ function taxonomy_menu_taxonomy_menu_insert($item) {
  *   'mlid' => mlid that needs to be edited
  *   'remove' => if this is set to TRUE then the $item is not added as a menu
  *
- * @return $item
  */
-function taxonomy_menu_taxonomy_menu_update($item) {
-  return _taxonomy_menu_item($item);
+function taxonomy_menu_taxonomy_menu_update(&$item) {
+  $item = _taxonomy_menu_item($item);
 }
 
 /**
