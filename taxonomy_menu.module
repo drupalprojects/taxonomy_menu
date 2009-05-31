@@ -294,7 +294,7 @@ function taxonomy_menu_taxonomy($op, $type, $args = NULL) {
 
         case 'delete':
           $item = array(
-            'tid' => taxonomy_get_term($args['tid']),
+            'term' => taxonomy_get_term($args['tid']),
             'mlid' => _taxonomy_menu_get_mlid($args['tid'], $args['vid']),
           );
           $message = "Term '@term' has been deleted from taxonomy menu '@menuname'";
@@ -597,6 +597,7 @@ function taxonomy_menu_path_default($vid, $tid) {
 function taxonomy_menu_taxonomy_menu_delete($args = array()) {
   menu_link_delete($args['mlid']);
   _taxonomy_menu_delete_item($args['vid'], $args['tid']);
+  return $args;
 }
 
 /**
