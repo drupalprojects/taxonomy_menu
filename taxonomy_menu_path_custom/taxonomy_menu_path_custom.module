@@ -32,6 +32,13 @@ function taxonomy_menu_path_custom_taxonomy_menu_options() {
     '#description' => t("Only used with a Custom Path.<br />
 	  You need to have a view with path 'custom path/%' and an argument 'Term ID' <strong>before</strong> you create this taxonomy menu."),
   );
+  $options['taxonomy_menu_path_custom_use_term_name'] = array(
+    '#title' => t('Use Term Name'),
+    '#weight' => -1,
+    '#type' => 'checkbox',
+    'default' => '',
+    '#description' => t("If checked, use Term Name instead of Term ID."),
+  );
 
   return $options;
 }
@@ -79,6 +86,17 @@ function taxonomy_menu_path_custom_path($vid, $tid) {
   if ($depth != '') {
     $path .= '/'. $depth;
   }
-
+  
+  if(variable_get('taxonomy_menu_taxonomy_menu_path_custom_use_term_name_'. $vid, false)) {
+    $tids = ($tids) ? $tids : array($tid);
+   
+    foreach($tids as $tid) {
+      $term = taxonomy_get_term($tid);
+      $names[] = strtolower(str_replace(' ','-',$term->name));
+    }
+    
+    $path = $base_path .'/'. implode(' ',$names);
+  }
+  
   return $path;
 }
