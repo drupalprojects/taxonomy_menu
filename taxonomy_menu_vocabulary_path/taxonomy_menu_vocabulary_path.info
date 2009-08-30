@@ -1,0 +1,11 @@
+; $Id$
+core          = "6.x"
+dependencies[] = taxonomy
+dependencies[] = taxonomy_menu
+description   = "Enables a custom path for each vocabulary through Taxonomy Menu"
+name          = "Taxonomy Menu Vocabulary Path"
+package       = Taxonomy Menu
+
+; Information added by drupal.org packaging script on 2009-03-26
+version = "6.x-1.0"
+core = "6.x"

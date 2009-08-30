@@ -140,3 +140,13 @@ function _taxonomy_menu_term_count($tid) {
 function _taxonomy_menu_get_tid($mlid) {
   return db_result(db_query('SELECT tid FROM {taxonomy_menu} WHERE mlid = %d', $mlid));
 }
+
+/**
+ * Get vid, tid for a given mlid
+ *
+ * @param $mlid
+ * @return array of vid, tid
+ */
+function _taxonomy_menu_get_item($mlid) {
+  return db_fetch_array(db_query('SELECT tid, vid FROM {taxonomy_menu} WHERE mlid = %d', $mlid));
+}

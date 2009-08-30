@@ -470,6 +470,19 @@ function _taxonomy_menu_save($item) {
     'expanded' => variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE),
     'link_path' => $path,
   );
+  
+  //Add setup the query paramater in the URL correctly 
+  if (strpos($path, '?') !== FALSE) {
+   $split = explode('?', $path); 
+   if (strpos($split[1], '?') !== FALSE) {
+     // the query split didn't work, too many question marks
+     // error?
+   } else {
+     $link['options']['query'] = $split[1];
+     $link['link_path'] = $split[0];
+   }
+ }
+
 
   //if passed a mlid then add it
   if ($item['mlid']) {
@@ -477,7 +490,7 @@ function _taxonomy_menu_save($item) {
     $insert = FALSE;
   }
 
-//FIXME: i18nmenu need to be cleaned up to allow translation from other menu module
+  //FIXME: i18nmenu need to be cleaned up to allow translation from other menu module
   if (module_exists('i18nmenu')) {
     $link['options']['alter'] = TRUE;
   }
@@ -567,15 +580,21 @@ function taxonomy_menu_path_default($vid, $tid) {
   else {
     $path = taxonomy_term_path(taxonomy_get_term($tid));
     if (variable_get('taxonomy_menu_display_descendants_'. $vid, FALSE)) {
-      //we wait to run this instead of durning the if above
-      //because we only wan to run it once.
-      $terms = taxonomy_get_tree($vid, $tid);
-      foreach ($terms as $term) {
-        $tids[] = $term->tid;
+      //Use 'all' at the end of the path 
+      if (variable_get('taxonomy_menu_end_all_'. $vid, TRUE)) {
+        $path .= '/all';
       }
-      if ($tids) {
-        $end = implode(' ', $tids);
-        $path .= ' '. $end;
+      else {
+        //we wait to run this instead of durning the if above
+        //because we only wan to run it once.
+        $terms = taxonomy_get_tree($vid, $tid);
+        foreach ($terms as $term) {
+          $tids[] = $term->tid;
+        }
+        if ($tids) {
+          $end = implode(' ', $tids);
+          $path .= ' '. $end;
+        }
       }
     }
   }
@@ -855,6 +874,14 @@ function taxonomy_menu_taxonomy_menu_options() {
     '#title' => t('Display Descendants'),
     'default' => FALSE,
   );
+  
+  $options['end_all'] = array(
+    '#title' => t("Use 'all' at the end of URL"),
+    'default' => TRUE,
+    '#description' => t('This changes tid+tid+tid to "All" in term when Dispaly Decendants is selected. <br />
+    Only used if Menu Path Type is "Default path". <br />
+    Works with default taxonomy page.'),
+  );
 
   return $options;
 }
@@ -868,16 +895,43 @@ function taxonomy_menu_taxonomy_menu_options() {
  */
 function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
   if (module_exists('i18ntaxonomy')) {
-    //in case of localized terms, use term translation for menu title
+    // in case of localized terms, use term translation for menu title
     if ($item['module'] == 'taxonomy_menu') {
-      //TODO: check vocabulary translation mode before tryring to translate: but is this really usefull ? 
+      // TODO: check vocabulary translation mode before tryring to translate: but is this really usefull ?
       //  if (i18ntaxonomy_vocabulary($vid) == I18N_TAXONOMY_LOCALIZE) {
-      $term = taxonomy_get_term(_taxonomy_menu_get_tid($item['mlid']));
-      if ($item['title'] != $term->name) {
-        //DEBUG: should never appends ?
-        drupal_set_message('Menu and taxonomy name mismatch : ' . $item['title'] . '!=' . $term->name, 'error');
+      $t = _taxonomy_menu_get_item($item['mlid']);
+      if ($t['tid'] > 0) {  // this is a term
+        $term = taxonomy_get_term($t['tid']);
+
+        $display_num = '';
+        $num = _taxonomy_menu_term_count($t['tid']);
+
+        //if hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
+        if ($num == 0 &&
+          variable_get('taxonomy_menu_hide_empty_terms_'. $t['vid'], FALSE) &&
+          _taxonomy_menu_children_has_nodes($t['tid'], $t['vid'])) {
+          $display_num = '';
+        }
+        // if display number is selected and $num > 0 then change the title
+        else if (variable_get('taxonomy_menu_display_num_'. $t['vid'], FALSE)) {
+          // if number > 0 and display decendants, then count all of the children
+          if (variable_get('taxonomy_menu_display_descendants_'. $t['vid'], FALSE)) {
+            $num = taxonomy_term_count_nodes($t['tid']);
+          }
+          $display_num = " ($num)";
+        }
+
+        if ($item['title'] != ($term->name . $display_num)) {
+          // Should not happen
+          drupal_set_message(t('Menu and taxonomy name mismatch : @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)), 'error');
+        }
+        $item['title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
       }
-      $item['title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name);
+      else {  // is a vocabulary
+        $vocab = taxonomy_vocabulary_load($t['vid']);
+        $item['title'] = tt('taxonomy:vocabulary:'. $vocab->vid .':name', $vocab->name);
+      }
     }
   }
 }
+
