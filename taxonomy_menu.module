@@ -10,8 +10,17 @@
  * @author Afief Halumi       <http://drupal.org/user/237472>
  */
 
-//include the database layer
-require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.database.inc');
+/**
+ * Implementation of hook_init().
+ */
+function taxonomy_menu_init() {
+  //include the database layer
+  require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.database.inc');
+  
+  //include the batch functions
+  require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.batch.inc');
+}
+
 
 /**
  * Implementation of hook_form_alter().
@@ -224,15 +233,8 @@ function _taxonomy_menu_insert_link_items($vid) {
 
       $mlid = taxonomy_menu_handler('insert', $args);
     }
-  //cycle through terms for the vocab
-  foreach (taxonomy_get_tree($vid) as $term) {
-    $args = array(
-      'term' => $term,
-      'menu_name' => $menu_name,
-    );
-
-    $mlid = taxonomy_menu_handler('insert', $args);
-  }
+  //let batch api take care of inserting the menu items
+  _taxonomy_menu_insert_link_items_batch($vid);
 }
 /**
  * Implementation of hook_taxonomy().
