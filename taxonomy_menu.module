@@ -321,29 +321,36 @@ function taxonomy_menu_taxonomy($op, $type, $args = NULL) {
  */
 function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
   static $terms_old;
+  
+  // We only need to check for updates if
+  // 'hide empty terms' or 'show number of nodes'
+  // is selected
+  if (variable_get('taxonomy_menu_display_num', FALSE)
+    || variable_get('taxonomy_menu_hide_empty_terms', FALSE)) {
 
-  //if display numbers is on, update the menu item with the new name
-  if ($op == 'update' || $op == 'insert') {
-    //we use this direct table pull to avoid the cache and because
-    //free tags are not formated in a matter where extrating the
-    //tid's is easy
-    $terms_new = _taxonomy_menu_get_node_terms($node->nid);
-
-    //merge current terms and previous terms to update both menu items.
-    $terms = array_unique(array_merge((array)$terms_new, (array)$terms_old));
-    _taxonomy_menu_nodeadpi_helper($op, $terms);
-  }
-  elseif ($op == 'presave') {
-    //get the terms from the database before the changes are made.
-    //these will be used to update the menu item's name if needed
-    //we go directly to the db to bypass any caches
-    $terms_old = _taxonomy_menu_get_node_terms($node->nid);
-  }
-  elseif ($op == 'delete') {
-    //since the delete operation is run after the data is deleted
-    //pull the terms from the node object
-    $terms = array_keys($node->taxonomy);
-    _taxonomy_menu_nodeadpi_helper($op, $terms);    
+    //if display numbers is on, update the menu item with the new name
+    if ($op == 'update' || $op == 'insert') {
+      //we use this direct table pull to avoid the cache and because
+      //free tags are not formated in a matter where extrating the
+      //tid's is easy
+      $terms_new = _taxonomy_menu_get_node_terms($node->nid);
+  
+      //merge current terms and previous terms to update both menu items.
+      $terms = array_unique(array_merge((array)$terms_new, (array)$terms_old));
+      _taxonomy_menu_nodeadpi_helper($op, $terms);
+    }
+    elseif ($op == 'presave') {
+      //get the terms from the database before the changes are made.
+      //these will be used to update the menu item's name if needed
+      //we go directly to the db to bypass any caches
+      $terms_old = _taxonomy_menu_get_node_terms($node->nid);
+    }
+    elseif ($op == 'delete') {
+      //since the delete operation is run after the data is deleted
+      //pull the terms from the node object
+      $terms = array_keys($node->taxonomy);
+      _taxonomy_menu_nodeadpi_helper($op, $terms);    
+    }
   }
 }
 
@@ -386,9 +393,17 @@ function _taxonomy_menu_nodeadpi_helper($op, $terms = array()) {
 
         case 'delete':
           $args = array(
+            'term' => $term,
             'tid' => $term->tid,
+            'vid' => $term->vid,
+            'menu_name' => $menu_name,
             'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
           );
+          /* Turn the op to 'update' here since we really do want to update the item
+           * and not delete/recreate it, since the latter will break hierarchy and
+           * customizations.
+           */
+          $op = 'update';
       }
       taxonomy_menu_handler($op, $args);
     }
@@ -615,9 +630,10 @@ function taxonomy_menu_path_default($vid, $tid) {
  *  )
  *
  */
-function taxonomy_menu_taxonomy_menu_delete($args = array()) {
-  menu_link_delete($args['mlid']);
-  _taxonomy_menu_delete_item($args['vid'], $args['tid']);
+function taxonomy_menu_taxonomy_menu_delete(&$item) {
+  menu_link_delete($item['mlid']);
+  _taxonomy_menu_delete_item($item['vid'], $item['tid']);
+  unset($item['mlid']);
   return $args;
 }
 
