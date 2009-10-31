@@ -131,18 +131,6 @@ function _taxonomy_menu_term_count($tid) {
   return db_result(db_query(db_rewrite_sql('SELECT COUNT(n.nid) AS c FROM {term_node} t INNER JOIN {node} n ON t.vid = n.vid WHERE n.status = 1 AND t.tid = %d'), $tid));
 }
 
-function _taxonomy_menu_term_count($tid) {
-  $view = views_get_view('taxonomy_term');
-  if(is_object($view)){
-$args = array($tid);
-$view->set_arguments($args);
-$view->execute_display('page', $args);
-return $view->total_rows;
-  } else {
-return db_result(db_query('SELECT COUNT(n.nid) AS c FROM {term_node} t INNER JOIN {node} n ON t.vid = n.vid WHERE n.status = 1 AND t.tid = %d', $tid));
-  }
-}
-
 /**
  * Get tid for a given mlid
  *
