@@ -32,7 +32,7 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'taxonomy_form_vocabulary') {
     // choose a menu to add link items to.
     $menus = menu_get_menus();
-    array_unshift($menus, '= DISABLED =');
+    array_unshift($menus, t('- Disabled -'));
 
     //options for path if tokens are not enabled
     $paths = _taxonomy_menu_get_paths();
@@ -55,12 +55,10 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
 
     $form['taxonomy_menu']['path'] = array(
       '#type' => 'select',
-      '#title' => t('Menu Path Type'),
+      '#title' => t('Menu path type'),
       '#default_value' => variable_get('taxonomy_menu_path_'. $form['vid']['#value'], 0),
       '#options' => $paths,
-      '#description' => t('If Default is selected then the path is taxonomy/term/tid <br />
-        The menu path will be passed through drupal_get_path_alias() function so all aliases will be applied'
-      ),
+      '#description' => t('The path will be taxonomy/term/tid if <em>Default</em> has been selected.<br />The menu path will be passed through drupal_get_path_alias() function so all aliases will be applied.'),
     );
 
     //get taxonomy menu form options
@@ -72,7 +70,7 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#title' => t('Select to rebuild the menu on submit.'),
       '#default_value' => 0,
       '#weight' => 20,
-      '#description' => t('Rebuild the menu on submit.  Warning:  This will delete then re-create all of the menu items.  Only use this option if you are experiencing issues.'),
+      '#description' => t('Rebuild the menu on submit. <strong>Warning</strong>: This will delete then re-create all of the menu items. Only use this option if you are experiencing issues like missing menu items or other inconsistencies.'),
     );
     // move the buttons to the bottom of the form
     $form['submit']['#weight'] = 49;
@@ -163,10 +161,10 @@ function _taxonomy_menu_rebuild($vid) {
   //only insert the links if a menu is set
   if (variable_get('taxonomy_menu_vocab_menu_'. $vid, FALSE)) {
     _taxonomy_menu_insert_link_items($vid);
-    return t('The Taxonomy Menu has been rebuilt');
+    return t('The Taxonomy Menu has been rebuilt.');
   }
 
-  return t('The Taxonomy Menu has been removed');
+  return t('The Taxonomy Menu has been removed.');
 }
 
 /**
@@ -213,7 +211,7 @@ function _taxonomy_menu_update_link_items($vid) {
     taxonomy_menu_handler('update', $args);
   }
 
-  return t("The Taxonomy Menu $menu_name has been updated.");
+  return t('The Taxonomy Menu %menu_name has been updated.', array('%menu_name' => $menu_name));
 }
 
 /**
@@ -275,7 +273,7 @@ function taxonomy_menu_taxonomy($op, $type, $args = NULL) {
             'term' => $term,
             'menu_name' => $menu_name,
           );
-          $message = "Term '@term' has been added to taxonomy menu '@menuname'";
+          $message = t('Term %term has been added to taxonomy menu %menu_name.', array('%term' => $args['name'], '%menu_name' => $menu_name));
           break;
 
         case 'update':
@@ -291,7 +289,7 @@ function taxonomy_menu_taxonomy($op, $type, $args = NULL) {
             'menu_name' => $menu_name,
             'mlid' => _taxonomy_menu_get_mlid($args['tid'], $args['vid']),
           );
-          $message = "Term '@term' has been updated in taxonomy menu '@menuname'";
+          $message = t('Term %term has been updated in taxonomy menu %menu_name.', array('%term' => $args['name'], '%menu_name' => $menu_name));
           break;
 
         case 'delete':
@@ -299,13 +297,12 @@ function taxonomy_menu_taxonomy($op, $type, $args = NULL) {
             'term' => taxonomy_get_term($args['tid']),
             'mlid' => _taxonomy_menu_get_mlid($args['tid'], $args['vid']),
           );
-          $message = "Term '@term' has been deleted from taxonomy menu '@menuname'";
+          $message = t('Term %term has been deleted from taxonomy menu %menu_name.', array('%term' => $args['name'], '%menu_name' => $menu_name));
           break;
       }
       // run function
       taxonomy_menu_handler($op, $item);
       // report status
-      $message = t($message, array('@term' => $args['name'], '@menuname' => $menu_name));
       drupal_set_message($message, 'status');
 
       // rebuild the menu
@@ -510,6 +507,8 @@ function _taxonomy_menu_save($item) {
   //FIXME: i18nmenu need to be cleaned up to allow translation from other menu module
   if (module_exists('i18nmenu')) {
     $link['options']['alter'] = TRUE;
+    $link['language'] = $item['language'];
+    $link['customized'] = 1;
   }
 
   //set the has_children property
@@ -538,7 +537,7 @@ function _taxonomy_menu_save($item) {
     return $mlid;
   }
   else {
-    drupal_set_message(t('Could not save the menu link for the taxonomy menu'), 'error');
+    drupal_set_message(t('Could not save the menu link for the taxonomy menu.'), 'error');
     return FALSE;
   }
 }
@@ -859,46 +858,45 @@ function _taxonomy_menu_build_variable($name, $vid) {
 function taxonomy_menu_taxonomy_menu_options() {
 
   $options['sync'] = array(
-    '#title' => t('Syncronise changes to this vocabulary'),
+    '#title' => t('Synchronise changes to this vocabulary'),
     '#description' => t('Every time a term is added/deleted/modified, the corresponding menu link will be altered too.'),
     'default' => TRUE,
   );
 
   $options['display_num'] = array(
-    '#title' => t('Display Number of Nodes'),
-    '#description' => t('Display the number of Items per taxonomy Terms.  Will not show up for vocabulary menu items.'),
+    '#title' => t('Display number of items'),
+    '#description' => t('Display the number of items per taxonomy terms. Will not show up for vocabulary menu items.'),
     'default' => FALSE,
   );
 
   $options['hide_empty_terms'] = array(
-    '#title' => t('Hide Empty Terms'),
-    '#description' => t('Hide terms with no nodes attached to them.'),
+    '#title' => t('Hide empty terms'),
+    '#description' => t('Hide terms with no items attached to them.'),
     'default' => FALSE,
   );
 
   $options['voc_item'] = array(
-    '#title' => t('Item for Vocabulary'),
-    '#description' => t("Shall the vocabulary have it's own item."),
+    '#title' => t('Add item for vocabulary'),
+    '#description' => t('Shows the vocabulary name as the top level menu item of the taxonomy menu.'),
     'default' => TRUE,
   );
 
   $options['expanded'] = array(
-    '#title' => t('Auto Expand Menu Item'),
-    '#description' => t('Sets the expand setting to TRUE'),
+    '#title' => t('Auto expand menu items'),
+    '#description' => t('Automatically show all menu items as expanded.'),
     'default' => TRUE,
   );
 
   $options['display_descendants'] = array(
-    '#title' => t('Display Descendants'),
+    '#title' => t('Display descendants'),
+    '#description' => t('TODO'),
     'default' => FALSE,
   );
   
   $options['end_all'] = array(
     '#title' => t("Use 'all' at the end of URL"),
     'default' => TRUE,
-    '#description' => t('This changes tid+tid+tid to "All" in term when Dispaly Decendants is selected. <br />
-    Only used if Menu Path Type is "Default path". <br />
-    Works with default taxonomy page.'),
+    '#description' => t('This changes tid+tid+tid to "All" in term when <em>Display descendants</em> has been selected.<br />Only used if <em>Menu path type</em> is "Default path".<br />Works with default taxonomy page.'),
   );
 
   return $options;
@@ -941,7 +939,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
 
         if ($item['title'] != ($term->name . $display_num)) {
           // Should not happen
-          drupal_set_message(t('Menu and taxonomy name mismatch : @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)), 'error');
+          drupal_set_message(t('Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)), 'error');
         }
         $item['title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
       }

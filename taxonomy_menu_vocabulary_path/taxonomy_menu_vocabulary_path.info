@@ -2,7 +2,7 @@
 core          = "6.x"
 dependencies[] = taxonomy
 dependencies[] = taxonomy_menu
-description   = "Enables a custom path for each vocabulary through Taxonomy Menu"
+description   = "Enables a custom path for each vocabulary through Taxonomy Menu."
 name          = "Taxonomy Menu Vocabulary Path"
 package       = Taxonomy Menu
 

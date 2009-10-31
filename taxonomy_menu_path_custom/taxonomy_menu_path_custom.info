@@ -2,6 +2,6 @@
 core          = "6.x"
 dependencies[] = taxonomy
 dependencies[] = taxonomy_menu
-description   = "Enables Custom path base to Taxonomy Menu"
+description   = "Enables Custom path base to Taxonomy Menu."
 name          = "Taxonomy Menu Custom Path"
 package       = Taxonomy Menu

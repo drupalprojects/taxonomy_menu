@@ -46,7 +46,7 @@ function _taxonomy_menu_insert_link_items_batch($vid) {
     'finished' => '_taxonomy_menu_insert_link_items_success', 
     'title' => t('Rebuilding Taxonomy Menu'), 
     'init_message' => t('The menu items have been deleted, and are about to be regenerated.'), 
-    'progress_message' => t('Import Progress: Completed @current of @total Stages.'),
+    'progress_message' => t('Import progress: Completed @current of @total stages.'),
     'redirect' => 'admin/content/taxonomy/edit/vocabulary/'. $vid,
     'error_message' => t('The Taxonomy Menu rebuild process encountered an error.'), 
   ); 
@@ -80,7 +80,7 @@ function _taxonomy_menu_insert_link_items_process($terms, $menu_name, &$context)
  */
 function _taxonomy_menu_insert_link_items_success() {
   //TODO state menu name here
-  drupal_set_message("The Taxonomy Menu has been updated.");
+  drupal_set_message('The Taxonomy Menu has been updated.');
 }
 
 /*

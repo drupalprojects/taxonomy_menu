@@ -19,7 +19,7 @@
 function taxonomy_menu_vocabulary_path_taxonomy_menu_options() {
   $options['taxonomy_menu_vocabulary_path'] = array(
     '#title' => t('Custom path for vocabulary'),
-    '#description' => t('Enter the path you would like to use for this vocabulary. Only used if Menu Path Type is "Vocabulary path".'),
+    '#description' => t('Enter the path you would like to use for this vocabulary. Only used if menu path type is "Vocabulary path".'),
     'default' => 'category',
     '#type' => 'textfield',
     '#weight' => -5,
@@ -30,7 +30,7 @@ function taxonomy_menu_vocabulary_path_taxonomy_menu_options() {
     '#weight' => -4,
     '#type' => 'checkbox',
     'default' => '',
-    '#description' => t('Use the custom path for vocabulary as base path for term menu items. Only used if Menu Path Type is "Vocabulary path".'),
+    '#description' => t('Use the custom path for vocabulary as base path for term menu items. Only used if Menu path type is "Vocabulary path".'),
   );
  
   return $options;
