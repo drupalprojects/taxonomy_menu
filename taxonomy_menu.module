@@ -318,12 +318,15 @@ function taxonomy_menu_taxonomy($op, $type, $args = NULL) {
  */
 function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
   static $terms_old;
-  static $status;
+  static $status; // 2 == TRUE, 1 == FALSE
 
   if ($op == 'presave' || $op == 'update' || $op == 'insert' || $op == 'delete') {
     // Get the vocabs assoicated to this node
     if (!$status) {
-      $vids = _taxonomy_menu_get_vid_by_tid($node->taxonomy);
+      // The delete operation formats the taxonomy array differently
+      // so pull the array keys instead of values which is always the tid
+      $node_tids = array_keys($node->taxonomy);
+      $vids = _taxonomy_menu_get_vid_by_tid($node_tids);
       // Check to see if the any of the vocabs have display num
       // or empty terms enabled
       foreach ($vids as $vid) {
