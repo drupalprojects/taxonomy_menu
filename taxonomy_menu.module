@@ -16,7 +16,7 @@
 function taxonomy_menu_init() {
   //include the database layer
   require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.database.inc');
-  
+
   //include the batch functions
   require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.batch.inc');
 }
@@ -318,41 +318,59 @@ function taxonomy_menu_taxonomy($op, $type, $args = NULL) {
  */
 function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
   static $terms_old;
-  
-  // We only need to check for updates if
-  // 'hide empty terms' or 'show number of nodes'
-  // is selected
-  if (variable_get('taxonomy_menu_display_num', FALSE)
-    || variable_get('taxonomy_menu_hide_empty_terms', FALSE)) {
+  static $status;
 
-    //if display numbers is on, update the menu item with the new name
-    if ($op == 'update' || $op == 'insert') {
-      //we use this direct table pull to avoid the cache and because
-      //free tags are not formated in a matter where extrating the
-      //tid's is easy
-      $terms_new = _taxonomy_menu_get_node_terms($node->nid);
-  
-      //merge current terms and previous terms to update both menu items.
-      $terms = array_unique(array_merge((array)$terms_new, (array)$terms_old));
-      _taxonomy_menu_nodeadpi_helper($op, $terms);
+  if ($op == 'presave' || $op == 'update' || $op == 'insert' || $op == 'delete') {
+    // Get the vocabs assoicated to this node
+    if (!$status) {
+      $vids = _taxonomy_menu_get_vid_by_tid($node->taxonomy);
+      // Check to see if the any of the vocabs have display num
+      // or empty terms enabled
+      foreach ($vids as $vid) {
+        if (variable_get('taxonomy_menu_display_num_'. $vid, FALSE)
+          || variable_get('taxonomy_menu_hide_empty_terms_'. $vid, FALSE)) {
+            $status = 2;
+        }
+        else {
+          $status = 1;
+        }
+      }
     }
-    elseif ($op == 'presave') {
-      //get the terms from the database before the changes are made.
-      //these will be used to update the menu item's name if needed
-      //we go directly to the db to bypass any caches
-      $terms_old = _taxonomy_menu_get_node_terms($node->nid);
-    }
-    elseif ($op == 'delete') {
-      //since the delete operation is run after the data is deleted
-      //pull the terms from the node object
-      $terms = array_keys($node->taxonomy);
-      _taxonomy_menu_nodeadpi_helper($op, $terms);    
+
+    if ($status == 2) {
+      switch ($op) {
+        case 'insert':
+        case 'update':
+          //we use this direct table pull to avoid the cache and because
+          //free tags are not formated in a matter where extrating the
+          //tid's is easy
+          $terms_new = _taxonomy_menu_get_node_terms($node->nid);
+
+          //merge current terms and previous terms to update both menu items.
+          $terms = array_unique(array_merge((array)$terms_new, (array)$terms_old));
+          _taxonomy_menu_nodeadpi_helper($op, $terms);
+          break;
+
+        case 'presave':
+          //get the terms from the database before the changes are made.
+          //these will be used to update the menu item's name if needed
+          //we go directly to the db to bypass any caches
+          $terms_old = _taxonomy_menu_get_node_terms($node->nid);
+          break;
+
+        case 'delete':
+          //since the delete operation is run after the data is deleted
+          //pull the terms from the node object
+          $terms = array_keys($node->taxonomy);
+          _taxonomy_menu_nodeadpi_helper($op, $terms);
+          break;
+      }
     }
   }
 }
 
 /**
- * Helper function to 
+ * Helper function to
  * @param $tids
  * @return unknown_type
  */
@@ -484,10 +502,10 @@ function _taxonomy_menu_save($item) {
     'expanded' => variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE),
     'link_path' => $path,
   );
-  
-  //Add setup the query paramater in the URL correctly 
+
+  //Add setup the query paramater in the URL correctly
   if (strpos($path, '?') !== FALSE) {
-   $split = explode('?', $path); 
+   $split = explode('?', $path);
    if (strpos($split[1], '?') !== FALSE) {
      // the query split didn't work, too many question marks
      // error?
@@ -596,7 +614,7 @@ function taxonomy_menu_path_default($vid, $tid) {
   else {
     $path = taxonomy_term_path(taxonomy_get_term($tid));
     if (variable_get('taxonomy_menu_display_descendants_'. $vid, FALSE)) {
-      //Use 'all' at the end of the path 
+      //Use 'all' at the end of the path
       if (variable_get('taxonomy_menu_end_all_'. $vid, TRUE)) {
         $path .= '/all';
       }
@@ -889,10 +907,10 @@ function taxonomy_menu_taxonomy_menu_options() {
 
   $options['display_descendants'] = array(
     '#title' => t('Display descendants'),
-    '#description' => t('TODO'),
+    '#description' => t('Changes the default path to taxonomy/term/tid+tid+tid for all terms thave have child terms.'),
     'default' => FALSE,
   );
-  
+
   $options['end_all'] = array(
     '#title' => t("Use 'all' at the end of URL"),
     'default' => TRUE,
@@ -950,4 +968,3 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
     }
   }
 }
-
