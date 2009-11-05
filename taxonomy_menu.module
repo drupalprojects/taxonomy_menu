@@ -499,7 +499,8 @@ function _taxonomy_menu_save($item) {
     'link_title' => t($item['name']),
     'menu_name' => $item['menu_name'],
     'plid' => _taxonomy_menu_get_mlid($item['ptid'], $item['vid']),
-    'options' => array('attributes' => array('title' => t($item['description']))),
+    'options' => array('attributes' => array('title' => t(trim($item['description'])
+      ? $item['description'] : $item['name']))),
     'weight' => $item['weight'],
     'module' => 'taxonomy_menu',
     'expanded' => variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE),
