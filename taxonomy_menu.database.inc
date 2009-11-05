@@ -5,7 +5,7 @@
 /**
  * @file
  * Database functions
- * 
+ *
  * @author Neil Hastings      <http://drupal.org/user/245817>
  * @author Mark Theunissen    <http://drupal.org/user/108606>
  * @author Afief Halumi       <http://drupal.org/user/237472>
@@ -69,7 +69,7 @@ function _taxonomy_menu_delete_all($vid) {
 
 /**
  * Get an array of the tid's related to the node
- * 
+ *
  * @param $nid
  * @return array of tids
  */
@@ -84,7 +84,7 @@ function _taxonomy_menu_get_node_terms($nid) {
 
 /**
  * Get an array of the tid's from the parent
- * 
+ *
  * @param $tid
  * @return array of tid
  */
@@ -94,7 +94,7 @@ function _taxonomy_menu_get_parents($tid) {
   foreach ($result as $key => $item) {
     $output[] = $key;
   }
-  return $output;  
+  return $output;
 }
 
 /**
@@ -124,7 +124,7 @@ function _taxonomy_menu_get_terms($vid) {
 
 /**
  * used to get the count without children
- * 
+ *
  * @param $tid
  */
 function _taxonomy_menu_term_count($tid) {
@@ -149,4 +149,19 @@ function _taxonomy_menu_get_tid($mlid) {
  */
 function _taxonomy_menu_get_item($mlid) {
   return db_fetch_array(db_query('SELECT tid, vid FROM {taxonomy_menu} WHERE mlid = %d', $mlid));
+}
+
+/**
+ * Get the vocabulary for a tid
+ * @param $tid array of tids
+ * @return $vid
+ */
+function _taxonomy_menu_get_vid_by_tid($tid) {
+  $tids = implode(',', $tid);
+  $result = db_query("SELECT vid FROM {term_data} WHERE tid in (%s)", $tids);
+  $vids = array();
+  while ($data = db_fetch_object($result)) {
+    $vids[$data->vid] = $data->vid;
+  }
+  return $vids;
 }
