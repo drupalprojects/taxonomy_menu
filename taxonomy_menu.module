@@ -244,13 +244,11 @@ function _taxonomy_menu_insert_link_items($vid) {
 function taxonomy_menu_taxonomy($op, $type, $args = NULL) {
   //if submiting vocab, set new preferences
 
-  if ($type == 'vocabulary') {
-    if ($op == 'delete') {
+  if ($type == 'vocabulary' && $op == 'delete') {
       //delete the menu items
-      _taxonomy_menu_delete_all($vid);
+      _taxonomy_menu_delete_all($args['vid']);
       $menu_name = variable_get('taxonomy_menu_vocab_menu_'. $args['vid'], 0);
       menu_cache_clear($menu_name);
-    }
   }
   else {
     // only sync if taxonomy_menu is enabled for this vocab and the 'sync'

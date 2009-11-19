@@ -157,11 +157,13 @@ function _taxonomy_menu_get_item($mlid) {
  * @return $vid
  */
 function _taxonomy_menu_get_vid_by_tid($tid) {
-  $tids = implode(',', $tid);
-  $result = db_query("SELECT vid FROM {term_data} WHERE tid in (%s)", $tids);
-  $vids = array();
-  while ($data = db_fetch_object($result)) {
-    $vids[$data->vid] = $data->vid;
+  if ($tid) {
+    $tids = implode(',', $tid);
+    $result = db_query("SELECT vid FROM {term_data} WHERE tid in (%s)", $tids);
+    $vids = array();
+    while ($data = db_fetch_object($result)) {
+      $vids[$data->vid] = $data->vid;
+    }
+    return $vids;
   }
-  return $vids;
 }
