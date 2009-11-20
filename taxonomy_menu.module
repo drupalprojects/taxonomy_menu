@@ -318,7 +318,7 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
   static $terms_old;
   static $status; // 2 == TRUE, 1 == FALSE
 
-  if ($op == 'presave' || $op == 'update' || $op == 'insert' || $op == 'delete') {
+  if (($op == 'presave' || $op == 'update' || $op == 'insert' || $op == 'delete') & $node->taxonomy) {
     // Get the vocabs assoicated to this node
     if (!$status) {
       // The delete operation formats the taxonomy array differently
