@@ -232,7 +232,20 @@ function _taxonomy_menu_insert_link_items($vid) {
       $mlid = taxonomy_menu_handler('insert', $args);
     }
   //let batch api take care of inserting the menu items
-  _taxonomy_menu_insert_link_items_batch($vid);
+  if (variable_get('taxonomy_menu_use_batch_api_'. $vid, FALSE)) {
+    _taxonomy_menu_insert_link_items_batch($vid);
+  }
+  else {
+    //cycle through terms for the vocab
+    foreach (taxonomy_get_tree($vid) as $term) {
+      $args = array(
+        'term' => $term,
+        'menu_name' => $menu_name,
+      );
+
+      $mlid = taxonomy_menu_handler('insert', $args);
+    }
+  }
 }
 /**
  * Implementation of hook_taxonomy().
@@ -881,6 +894,11 @@ function taxonomy_menu_taxonomy_menu_options() {
     '#title' => t('Synchronise changes to this vocabulary'),
     '#description' => t('Every time a term is added/deleted/modified, the corresponding menu link will be altered too.'),
     'default' => TRUE,
+  );
+
+  $options['use_batch_api'] = array(
+    '#title' => t('Use BatchAPI to create the menu'),
+    'default' => FALSE,
   );
 
   $options['display_num'] = array(
