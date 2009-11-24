@@ -332,7 +332,8 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
   static $status; // 2 == TRUE, 1 == FALSE
 
   if (($op == 'presave' || $op == 'update' || $op == 'insert' || $op == 'delete') & $node->taxonomy) {
-    // Get the vocabs assoicated to this node
+    // Remove the 'key' key value that is put in there by content taxonomy
+    unset($node->taxonomy['key']);
     if (!$status) {
       // The delete operation formats the taxonomy array differently
       // so pull the array keys instead of values which is always the tid
