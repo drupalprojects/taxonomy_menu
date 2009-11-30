@@ -232,20 +232,7 @@ function _taxonomy_menu_insert_link_items($vid) {
       $mlid = taxonomy_menu_handler('insert', $args);
     }
   //let batch api take care of inserting the menu items
-  if (variable_get('taxonomy_menu_use_batch_api_'. $vid, FALSE)) {
-    _taxonomy_menu_insert_link_items_batch($vid);
-  }
-  else {
-    //cycle through terms for the vocab
-    foreach (taxonomy_get_tree($vid) as $term) {
-      $args = array(
-        'term' => $term,
-        'menu_name' => $menu_name,
-      );
-
-      $mlid = taxonomy_menu_handler('insert', $args);
-    }
-  }
+  _taxonomy_menu_insert_link_items_batch($vid);
 }
 /**
  * Implementation of hook_taxonomy().
@@ -367,6 +354,11 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
 function _taxonomy_menu_nodeapi_helper($op, $terms = array()) {
   foreach ($terms as $key => $tid) {
     $term = taxonomy_get_term($tid);
+    $term->parents = array_keys(taxonomy_get_parents($tid));
+    //$parents = taxonomy_get_parents($tid);
+    //foreach ($parents as $term_id => $term_obj) {
+    //  $term->parents[] = $term_id;
+    //}
     //update the menu for each term if necessary
     $menu_name = variable_get('taxonomy_menu_vocab_menu_'. $term->vid, FALSE);
     $vocb_sync = variable_get('taxonomy_menu_sync_'. $term->vid, TRUE);
@@ -606,7 +598,7 @@ function taxonomy_menu_path_default($vid, $tid) {
     $path = taxonomy_term_path(taxonomy_get_term($tid));
     if (variable_get('taxonomy_menu_display_descendants_'. $vid, FALSE)) {
       //Use 'all' at the end of the path
-      if (variable_get('taxonomy_menu_end_all_'. $vid, TRUE)) {
+      if (variable_get('taxonomy_menu_end_all_'. $vid, FALSE)) {
         $path .= '/all';
       }
       else {
@@ -872,11 +864,6 @@ function taxonomy_menu_taxonomy_menu_options() {
     'default' => TRUE,
   );
 
-  $options['use_batch_api'] = array(
-    '#title' => t('Use BatchAPI to create the menu'),
-    'default' => FALSE,
-  );
-
   $options['display_num'] = array(
     '#title' => t('Display number of items'),
     '#description' => t('Display the number of items per taxonomy terms. Will not show up for vocabulary menu items.'),
@@ -909,7 +896,7 @@ function taxonomy_menu_taxonomy_menu_options() {
 
   $options['end_all'] = array(
     '#title' => t("Use 'all' at the end of URL"),
-    'default' => TRUE,
+    'default' => FALSE,
     '#description' => t('This changes tid+tid+tid to "All" in term when <em>Display descendants</em> has been selected.<br />Only used if <em>Menu path type</em> is "Default path".<br />Works with default taxonomy page.'),
   );
 
