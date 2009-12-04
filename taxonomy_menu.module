@@ -461,12 +461,22 @@ function taxonomy_menu_handler($op, $args = array(), $item = array()) {
  *     'name' => the term's name
  *     'description' => term description, used as to build the title attribute
  *     'weight' => term weight
+ *       (This will be overriden by the order created from taxonomy_get_tree which respects the correct wight)
  *     'vid' => the vocabulary's id
  *     'ptid' => the term's parent's term id
  *     'menu_name' => the menu that the link item will be inserted into
  *     'mlid' => if this is filled in then the mlid will be updated
  */
 function _taxonomy_menu_save($item) {
+
+  // Set the weight.  We need to do this becuase the menu system does not order the terms
+  // the same way that the taxonomy system does.
+  // We use a variable to store the value intead of static becuase
+  // using batch API loses the static value per requests.
+  $weight = variable_get('taxonomy_menu_weight', 0);
+  $weight++;
+  variable_set('taxonomy_menu_weight', $weight);
+
   $insert = TRUE;
 
   //creat the path.
@@ -480,7 +490,7 @@ function _taxonomy_menu_save($item) {
     'plid' => _taxonomy_menu_get_mlid($item['ptid'], $item['vid']),
     'options' => array('attributes' => array('title' => t(trim($item['description'])
       ? $item['description'] : $item['name']))),
-    'weight' => $item['weight'],
+    'weight' => $weight,
     'module' => 'taxonomy_menu',
     'expanded' => variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE),
     'link_path' => $path,
