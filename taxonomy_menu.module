@@ -6,6 +6,9 @@
  * It Generates menu links for all selected taxonomy terms
  */
 
+//include the database layer
+require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.database.inc');
+
 /**
  * Implementation of hook_perm().
  */
