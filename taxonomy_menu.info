@@ -1,6 +1,7 @@
 ; $Id$
 core          = "6.x"
 dependencies[] = taxonomy
+dependencies[] = "taxonomy_manager"
 description   = "Adds links to taxonomy terms to a menu."
 name          = "Taxonomy Menu"
 package       = Taxonomy Menu

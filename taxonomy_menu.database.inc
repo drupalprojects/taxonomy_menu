@@ -4,87 +4,12 @@
 
 /**
  * @file
- * Database functions
- * 
- * @author Neil Hastings      <http://drupal.org/user/245817>
- * @author Mark Theunissen    <http://drupal.org/user/108606>
- * @author Afief Halumi       <http://drupal.org/user/237472>
+ *  Taxonomy Menu functions that access the db
  */
-
- /**
- *  helper function to insert a menu item
- *
- * @param $mlid
- * @param $tid
- * @param $vid
- */
-function _taxonomy_menu_insert_menu_item($mlid, $tid, $vid) {
-  db_query('INSERT INTO {taxonomy_menu} (mlid, tid, vid) VALUES (%d, %d, %d)', $mlid, $tid, $vid);
-}
-
-/**
- * Return the corresponding menu link id.
- *
- * @param $tid
- *   the term's id
- */
-function _taxonomy_menu_get_mlid($tid, $vid) {
-  return db_result(db_query('SELECT mlid FROM {taxonomy_menu} WHERE tid = %d AND vid = %d', $tid, $vid));
-}
-
-/**
- * Retrieve the term / menu relations for a vocab.
- *
- * @param $vid
- *   vocabulary's id
- * @return
- *   array(tid => mlid)
- */
-function _taxonomy_menu_get_menu_items($vid) {
-
-  $result = db_query('SELECT mlid, tid FROM {taxonomy_menu} WHERE vid = %d', $vid);
-  $menu_items = array();
-  while ($data = db_fetch_object($result)) {
-    $menu_items[$data->tid] = $data->mlid;
-  }
-  return $menu_items;
-}
-
- /**
-  * Delete all links associated with this vocab from both the taxonomy_menu
-  * table and the menu_link table.
-  *
-  * @param $vid
-  *   vocabulary's id
-  */
-function _taxonomy_menu_delete_all($vid) {
-  $menu_terms = _taxonomy_menu_get_menu_items($vid);
-  if (!empty($menu_terms)) {
-    foreach ($menu_terms as $tid => $mlid) {
-      db_query('DELETE FROM {menu_links} WHERE mlid = %d', $mlid);
-    }
-    db_query('DELETE FROM {taxonomy_menu} WHERE vid = %d', $vid);
-  }
-}
-
-/**
- * Get an array of the tid's related to the node
- * 
- * @param $nid
- * @return array of tids
- */
-function _taxonomy_menu_get_node_terms($nid) {
-  $output = array();
-  $result = db_query(db_rewrite_sql('SELECT t.tid FROM {term_node} t WHERE t.nid = %d', 't', 'tid'), $nid);
-  while ($data = db_fetch_object($result)) {
-    $output[] = $data->tid;
-  }
-  return $output;
-}
 
 /**
  * Get an array of the tid's from the parent
- * 
+ *
  * @param $tid
  * @return array of tid
  */
@@ -94,17 +19,7 @@ function _taxonomy_menu_get_parents($tid) {
   foreach ($result as $key => $item) {
     $output[] = $key;
   }
-  return $output;  
-}
-
-/**
-  * Delete all rows from {taxomony_menu} associated with this tid
-  *
-  * @param $vid
-  * @param $tid
-  */
-function _taxonomy_menu_delete_item($vid, $tid) {
-  db_query('DELETE FROM {taxonomy_menu} WHERE vid = %d AND tid = %d', $vid, $tid);
+  return $output;
 }
 
 /**
@@ -124,7 +39,7 @@ function _taxonomy_menu_get_terms($vid) {
 
 /**
  * used to get the count without children
- * 
+ *
  * @param $tid
  */
 function _taxonomy_menu_term_count($tid) {
@@ -132,13 +47,93 @@ function _taxonomy_menu_term_count($tid) {
 }
 
 /**
- * Get tid for a given mlid
+ * get the name of a vocabulary
  *
- * @param $mlid
- * @return $tid
+ * @param $vid
+ * @return vocab name
  */
-function _taxonomy_menu_get_tid($mlid) {
-  return db_result(db_query('SELECT tid FROM {taxonomy_menu} WHERE mlid = %d', $mlid));
+function _taxonomy_menu_get_vocab_name($vid) {
+  return db_result(db_query('SELECT name FROM {vocabulary} WHERE vid = %d', $vid));
+}
+
+/**
+ * get the name of a term
+ * @param $tid
+ * @return term name
+ */
+function _taxonomy_menu_get_term_name($tid) {
+  return db_result(db_query(db_rewrite_sql('SELECT t.name FROM {term_data} t WHERE tid = %d','t', 'tid'), $tid));
+}
+
+/**
+ * get a list of the vocab names
+ *
+ * @return array of vocab objects
+ */
+function _taxonomy_menu_list_vocabs() {
+  $output = array();
+  $result = db_query('SELECT vid, name FROM {vocabulary}');
+  while ($data = db_fetch_object($result)) {
+    $output[] = $data;
+  }
+  return $output;
+}
+
+/**
+ * return the value of an option
+ *
+ * @param $name
+ * @param $type
+ * @return value of the option
+ */
+function taxonomy_menu_get_option($name, $type, $default, $type_key = '') {
+  $option =  db_result(db_query("SELECT value FROM {taxonomy_menu_options} WHERE name = '%s' AND type = '%s' and type_key = '%s'", $name, $type, $type_key));
+  return isset($option) ? $option : $default;
+}
+
+function _taxonomy_menu_get_options_by_key($type, $type_key) {
+  $output = array();
+  $type_key = strval($type_key);
+  $result = db_query("SELECT * FROM {taxonomy_menu_options} WHERE type = '%s' and type_key = '%s'", $type, $type_key);
+  while ($data = db_fetch_object($result)) {
+    $output[$data->name] = $data;
+  }
+  return $output;
+}
+/**
+ * get a list of the options
+ *
+ * @param @type
+ *
+ * @return array of option objects
+ */
+function taxonomy_menu_list_options($type) {
+  $output = array();
+  $result = db_query("SELECT * FROM {taxonomy_menu_options} WHERE type = '%s'", $type);
+  while ($data = db_fetch_object($result)) {
+    $output[] = $data;
+  }
+  return $output;
+}
+
+/**
+ * Save the taxonomy options.  Check to see if the option exists first
+ * @param $option object
+ *  ->name
+ *  ->type
+ *  ->value
+ *  ->type_key
+ */
+function taxonomy_menu_save_option($option) {
+  $old_value = taxonomy_menu_get_option($option->name, $option->type, NULL, $option->type_key);
+  if (!isset($old_value) || $old_value === FALSE) {
+    //option does not exist, insert new record
+    drupal_write_record('taxonomy_menu_options', $option);
+  }
+  else {
+    //record exists and update it
+    drupal_write_record('taxonomy_menu_options', $option, array('name', 'type', 'type_key'));
+  }
 }
 
 /**
@@ -149,4 +144,41 @@ function _taxonomy_menu_get_tid($mlid) {
  */
 function _taxonomy_menu_get_item($mlid) {
   return db_fetch_array(db_query('SELECT tid, vid FROM {taxonomy_menu} WHERE mlid = %d', $mlid));
+}
+
+/**
+ * Get a list of Term Sets that are not assicated with the menu group.
+ * @param $mgid
+ * @return array
+ */
+function taxonomy_menu_get_avaialbe_term_sets($mgid) {
+  $output = array();
+  $result = db_query('SELECT ts.tsid, ts.name FROM {taxonomy_menu_group_term_set} AS tsg
+    LEFT JOIN {taxonomy_menu_term_set} AS ts
+    ON tsg.tsid = ts.tsid
+    WHERE tsg.mgid = %d', $mgid);
+
+  while ($data = db_fetch_object($result)) {
+    $output[$data->tsid] = t($data->name);
+  }
+
+  return $output;
+}
+
+/**
+ * Function to pull the items for a menu group
+ */
+function taxonomy_menu_get_group_items($mgid) {
+  $result = db_fetch_object(db_query('SELECT items FROM {taxonomy_menu_group} WHERE mgid = %d', $mgid));
+  return unserialize($result);
+}
+
+/**
+ * Flattens Array
+ */
+function taxonomy_menu_flatten_array($array) {
+  foreach ($a as $k=>$v) {
+    $a[$k]=(array)$v;
+  }
+  return call_user_func_array(array_merge,$a);
 }

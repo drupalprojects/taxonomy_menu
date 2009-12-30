@@ -10,12 +10,6 @@
  * Implementation of hook_uninstall().
  */
 function taxonomy_menu_uninstall() {
-  
-  //remove menu items
-  db_query("DELETE FROM {menu_links} WHERE module = '%s'", 'taxonomy_menu');
-
-  //rebuild the menus
-  variable_set('menu_rebuild_needed', TRUE);
 
   // Delete variables
   $variables = db_query('SELECT * from {variable}');
@@ -30,6 +24,19 @@ function taxonomy_menu_uninstall() {
 }
 
 /**
+ * Implementation of hook_disable().
+ */
+function taxonomy_menu_disable() {
+
+  //remove menu items
+  db_query("DELETE FROM {menu_links} WHERE module = '%s'", 'taxonomy_menu');
+  db_query('DELETE FROM {taxonomy_menu}');
+
+  //rebuild the menus
+  variable_set('menu_rebuild_needed', TRUE);
+}
+
+/**
  * Implementation of hook_install().
  */
 function taxonomy_menu_install() {
@@ -41,70 +48,148 @@ function taxonomy_menu_install() {
  */
 function taxonomy_menu_schema() {
 
-  $schema['taxonomy_menu'] = array(
-    'description' => t('Links a taxonomy term to a menu item'),
+  $schema['taxonomy_menu_group'] = array(
+    'description' => t('Taxonomy Menu Groups'),
     'fields' => array(
-      'mlid' => array(
-        'type' => 'int',
+      'mgid' => array(
+        'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'default' => 0,
-        'description' => t('The taxonomy terms {menu_link}.mlid'),
       ),
-      'tid' => array(
-        'type' => 'int',
+      'parent_menu' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Parent Menu Link ID'),
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Menu Group Name'),
+      ),
+      'path' => array(
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'length' => 50,
+        'default' => 'taxonomy_menu_path_default',
+        'description' => t('Path Type'),
+      ),
+      'items' => array(
+        'description' => 'Associated Term Set IDs.',
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+      ),
+    ),
+    'primary key' => array('mgid'),
+    'indexes' => array(
+      'path' => array('path'),
+    ),
+  );
+
+  $schema['taxonomy_menu_term_set'] = array(
+    'description' => t('Taxonomy Menu Term Sets'),
+    'fields' => array(
+      'tsid' => array(
+        'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'default' => 0,
-        'description' => t('tid that is linked to the mlid'),
+        'description' => t('Taxonomy Menu Term Set ID'),
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'description' => t('Term Set Name'),
       ),
       'vid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
-        'description' => t('vid for the tid'),
+        'description' => t('Vocba ID'),
+      ),
+      'items' => array(
+        'description' => 'tree of tids for the term set.',
+        'type' => 'text',
+        'size' => 'big',
+        'serialize' => TRUE,
       ),
     ),
-    'primary key' => array('mlid', 'tid'),
+    'primary key' => array('tsid'),
+  );
+
+  $schema['taxonomy_menu_group_term_set'] = array(
+    'description' => t('Relationship between menu group and term set'),
+    'fields' => array(
+      'tsid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('Taxonomy Menu Term Set ID'),
+      ),
+      'parent_item' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'description' => t('Parent Term Set ID:Term ID'),
+      ),
+      'mgid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('The taxonomy menu group id'),
+      ),
+    ),
+    'primary key' => array('tsid', 'mgid'),
     'indexes' => array(
-      'vid' => array('vid'),
+      'tsid' => array('tsid'),
+      'mgid' => array('mgid'),
     ),
   );
+
+  $schema['taxonomy_menu_options'] = array(
+    'description' => t('Taxonomy Mneu Options'),
+    'fields' => array(
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'description' => t('Option Name'),
+      ),
+      'value' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'description' => t('Option Value'),
+      ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'description' => t('Option key'),
+      ),
+      'type_key' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'description' => t('Key from type'),
+      ),
+    ),
+    'primary key' => array('name', 'type', 'type_key'),
+    'indexes' => array(
+      'type' => array('type'),
+      'type_key' => array('type_key'),
+      'name' => array('name'),
+      'type_type_key' => array('type', 'type_key'),
+    ),
+  );
+
   return $schema;
 }
 
-function taxonomy_menu_update_6200() {
-  $schema['taxonomy_menu'] = array(
-    'description' => t('Links a taxonomy term to a menu item'),
-    'fields' => array(
-      'mlid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => t('The taxonomy terms {menu_link}.mlid'),
-      ),
-      'tid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => t('tid that is linked to the mlid'),
-      ),
-      'vid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => t('vid for the tid'),
-      ),
-    ),
-    'primary key' => array('mlid', 'tid'),
-    'indexes' => array(
-      'vid' => array('vid'),
-    ),
-  );
+function taxonomy_menu_update_6300() {
+  $schema = taxonomy_menu_schema();
   $ret = array();
   db_create_table($ret, 'taxonomy_menu', $schema['taxonomy_menu']);
   return $ret;
