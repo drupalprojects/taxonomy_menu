@@ -10,17 +10,11 @@
  * @author Afief Halumi       <http://drupal.org/user/237472>
  */
 
-/**
- * Implementation of hook_init().
- */
-function taxonomy_menu_init() {
-  //include the database layer
-  require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.database.inc');
+//include the database layer
+require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.database.inc');
 
-  //include the batch functions
-  require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.batch.inc');
-}
-
+//include the batch functions
+require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.batch.inc');
 
 /**
  * Implementation of hook_form_alter().
@@ -261,6 +255,7 @@ function _taxonomy_menu_insert_link_items($vid) {
  * menu (which would delete all other customisations the user may have done).
  */
 function taxonomy_menu_taxonomy($op, $type, $args = NULL) {
+
   //if submiting vocab, set new preferences
 
   if ($type == 'vocabulary' && $op == 'delete') {
@@ -991,7 +986,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
 
         if ($item['title'] != ($term->name . $display_num)) {
           // Should not happen
-          drupal_set_message(t('Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)), 'error');
+          watchdog('error', t('Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)));
         }
         $item['title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
       }
