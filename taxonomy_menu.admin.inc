@@ -609,7 +609,7 @@ function taxonomy_menu_ahah_term_set_remove($mgid, $tsid) {
 function _taxonomy_menu_ahah_disable_validation(&$form) {
   foreach (element_children($form) as $child) {
     $form[$child]['#validated'] = TRUE;
-    _taxonomy_menu_ahah_disable_validation(&$form[$child]);
+    _taxonomy_menu_ahah_disable_validation($form[$child]);
   }
 }
 

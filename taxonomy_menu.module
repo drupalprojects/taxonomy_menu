@@ -47,7 +47,7 @@ function taxonomy_menu_menu() {
     'weight' => 0,
   );
   $items["$base/group/add"] = array(
-    'title' => 'New Menu Group',
+    'title' => 'Add Menu Group',
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('taxonomy_menu_group_form'),
@@ -148,7 +148,7 @@ function taxonomy_menu_menu() {
  * @return array
  *  path selections
  */
-function _taxonomy_menu_get_paths() {
+function taxonomy_menu_get_paths() {
   return module_invoke_all('taxonomy_menu_path');
 }
 
