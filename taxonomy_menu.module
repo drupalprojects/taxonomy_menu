@@ -139,6 +139,86 @@ function taxonomy_menu_menu() {
 }
 
 /**
+ * PATH API FUNCTIONS
+ */
+
+/**
+ * Create the path to use in the menu item
+ *
+ * @return array
+ *  path selections
+ */
+function _taxonomy_menu_get_paths() {
+  return module_invoke_all('taxonomy_menu_path');
+}
+
+/**
+ * Create the path for the vid/tid combination.
+ *
+ * @param $vid
+ * @param $tid
+ * @return string
+ *  path
+ */
+function taxonomy_menu_create_path($vid, $tid) {
+  //get the path function for this vocabulary
+  $function = variable_get('taxonomy_menu_path_'. $vid, 'taxonomy_menu_path_default');
+  //run the function
+  return $function($vid, $tid);
+}
+
+/**
+ * hook_taxonomy_menu_path.  Invoked from _taxonomy_menu_get_paths.
+ *
+ * @return array
+ *  function name => Display Title
+ *  a list of the path options.
+ */
+function taxonomy_menu_taxonomy_menu_path() {
+  $output = array(
+    'taxonomy_menu_path_default' => t('Default'),
+  );
+
+  return $output;
+}
+
+/**
+ * Callback for hook_taxonomy_menu_path
+ */
+function taxonomy_menu_path_default($vid, $tid) {
+  //if tid = 0 then we are creating the vocab menu item format will be taxonomy/term/$tid+$tid+$tid....
+  if ($tid == 0) {
+    //get all of the terms for the vocab
+    $vtids = _taxonomy_menu_get_terms($vid);
+    $end = implode(' ', $vtids);
+    $path = "taxonomy/term/$end";
+  }
+  else {
+    $path = taxonomy_term_path(taxonomy_get_term($tid));
+    if (variable_get('taxonomy_menu_display_descendants_'. $vid, FALSE)) {
+      //Use 'all' at the end of the path
+      if (variable_get('taxonomy_menu_end_all_'. $vid, FALSE)) {
+        $path .= '/all';
+      }
+      else {
+        //we wait to run this instead of durning the if above
+        //because we only wan to run it once.
+        $terms = taxonomy_get_tree($vid, $tid);
+        foreach ($terms as $term) {
+          $tids[] = $term->tid;
+        }
+        if ($tids) {
+          $end = implode(' ', $tids);
+          $path .= ' '. $end;
+        }
+      }
+    }
+  }
+
+  return $path;
+}
+
+/**
  * Used to create a form array of taxonomy menu options
  * invokes hook_taxonomy_menu_options().
  *
