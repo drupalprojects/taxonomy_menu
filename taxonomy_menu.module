@@ -306,6 +306,9 @@ function taxonomy_menu_taxonomy($op, $type, $args = NULL) {
 
         case 'delete':
           $item = array(
+            'tid' => $args['tid'],
+            'vid' => $args['vid'],
+            'menu_name' => $menu_name,
             'term' => taxonomy_get_term($args['tid']),
             'mlid' => _taxonomy_menu_get_mlid($args['tid'], $args['vid']),
           );
@@ -383,6 +386,8 @@ function _taxonomy_menu_nodeapi_helper($op, $terms = array()) {
         case 'update':
           //build argument array to save menu_item
           $args = array(
+            'tid' => $term->tid,
+            'vid' => $term->vid,
             'term' => $term,
             'menu_name' => $menu_name,
             'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
@@ -394,6 +399,8 @@ function _taxonomy_menu_nodeapi_helper($op, $terms = array()) {
         case 'insert':
           //build argument array to save menu_item
           $args = array(
+            'tid' => $term->tid,
+            'vid' => $term->vid,
             'term' => $term,
             'menu_name' => $menu_name,
             'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
@@ -456,9 +463,9 @@ function taxonomy_menu_handler($op, $args = array(), $item = array()) {
   }
 
   //update the menu and return the mlid if the remove element is not true
- // if (!$item['remove']) {
+  if ($op != 'delete') {
     return _taxonomy_menu_save($item);
- // }
+  }
 }
 
 /**
@@ -666,7 +673,7 @@ function taxonomy_menu_taxonomy_menu_delete(&$item) {
   menu_link_delete($item['mlid']);
   _taxonomy_menu_delete_item($item['vid'], $item['tid']);
   unset($item['mlid']);
-  return $args;
+
 }
 
 /**
