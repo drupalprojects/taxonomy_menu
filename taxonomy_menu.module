@@ -125,7 +125,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
     $variable_name = _taxonomy_menu_build_variable($key, $vid);
 
     //check to see if the vocab enable options has changed
-    if ($key = 'voc_item') {
+    if ($key == 'voc_item') {
       if (_taxonomy_menu_check_variable($variable_name, $value)) {
         $change_vocab_item = TRUE;
       }
@@ -212,7 +212,7 @@ function _taxonomy_menu_update_link_items($vid) {
   //cycle through the
   foreach ($menu_links as $tid => $mlid) {
     if ($tid == 0) {
-      $args['vid'] = $menu_link->vid;
+      $args['vid'] = $vid;
     }
     else {
       $args['term'] = taxonomy_get_term($tid);
