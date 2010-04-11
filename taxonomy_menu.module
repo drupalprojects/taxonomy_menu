@@ -39,6 +39,7 @@ function taxonomy_menu_form_alter(&$form, $form_state, $form_id) {
       '#tree' => TRUE,
     );
     //this turns the vocab terms into menu items
+    $item['mlid'] = 0;
     $menu_items = menu_parent_options(menu_get_menus(), $item);
     array_unshift($menu_items, '= DISABLED =');
 
@@ -206,19 +207,22 @@ function _taxonomy_menu_update_link_items($vid) {
   $menu_name = variable_get('taxonomy_menu_vocab_menu_'. $vid, FALSE);
 
   //get a list of the current menu links
-  $menu_links = _taxonomy_menu_get_terms($vid);
+  $menu_links = _taxonomy_menu_get_menu_items($vid);
 
   //cycle through the
-  foreach ($menu_links as $menu_link) {
-    if ($menu_link->tid == 0) {
+  foreach ($menu_links as $tid => $mlid) {
+    if ($tid == 0) {
       $args['vid'] = $menu_link->vid;
     }
     else {
-      $args['term'] = taxonomy_get_term($menu_link->tid);
+      $args['term'] = taxonomy_get_term($tid);
+      //since taxonomy_get_term does not return the parents, fetch them now
+      $args['term']->parents = _taxonomy_menu_get_parents($tid);
     }
 
-    //set the mneu name
+    //set the menu name
     $args['menu_name'] = $menu_name;
+    $args['mlid'] = $mlid;
 
     //update the menu link
     taxonomy_menu_handler('update', $args);
@@ -490,15 +494,24 @@ function taxonomy_menu_handler($op, $args = array(), $item = array()) {
  */
 function _taxonomy_menu_save($item) {
 
-  // Set the weight.  We need to do this becuase the menu system does not order the terms
-  // the same way that the taxonomy system does.
-  // We use a variable to store the value intead of static becuase
-  // using batch API loses the static value per requests.
-  $weight = variable_get('taxonomy_menu_weight', 0);
-  $weight++;
-  variable_set('taxonomy_menu_weight', $weight);
+  if (!$item['mlid']) {
+    // Set the weight.  We need to do this becuase the menu system does not order the terms
+    // the same way that the taxonomy system does.
+    // We use a variable to store the value intead of static becuase
+    // using batch API loses the static value per requests.
+    $weight = variable_get('taxonomy_menu_weight', 0);
+    $weight++;
+    variable_set('taxonomy_menu_weight', $weight);
 
-  $insert = TRUE;
+    // Set the default expanded value
+    $expanded = variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE);
+
+    $insert = TRUE;
+  } else {
+    $menu_link = menu_link_load($item['mlid']);
+    $weight = $menu_link['weight'];
+    $expanded = $menu_link['expanded'];
+  }
 
   //creat the path.
   //use url to create he inital path
@@ -513,6 +526,12 @@ function _taxonomy_menu_save($item) {
     $plid = variable_get('taxonomy_menu_vocab_parent_'. $item['vid'], NULL);
   }
 
+  // Make sure the title has less then 256 characters
+  if (strlen($item['name']) > 256) {
+    preg_match('/(.{256}.*?)\b/', $item['name'], $matches);
+    $item['name'] = rtrim($matches[1]);
+  }
+
   $link = array(
     'link_title' => t($item['name']),
     'menu_name' => $item['menu_name'],
@@ -521,7 +540,7 @@ function _taxonomy_menu_save($item) {
       ? $item['description'] : $item['name']))),
     'weight' => $weight,
     'module' => 'taxonomy_menu',
-    'expanded' => variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE),
+    'expanded' => $expanded,
     'link_path' => $path,
   );
 
