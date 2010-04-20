@@ -533,11 +533,11 @@ function _taxonomy_menu_save($item) {
   }
 
   $link = array(
-    'link_title' => t($item['name']),
+    'link_title' => $item['name'],
     'menu_name' => $item['menu_name'],
     'plid' => $plid,
-    'options' => array('attributes' => array('title' => t(trim($item['description'])
-      ? $item['description'] : $item['name']))),
+    'options' => array('attributes' => array('title' => trim($item['description'])
+      ? $item['description'] : $item['name'])),
     'weight' => $weight,
     'module' => 'taxonomy_menu',
     'expanded' => $expanded,
@@ -758,8 +758,8 @@ function _taxonomy_menu_create_item($args = array()) {
   // turn the term into the correct $item array form
   $item = array(
     'tid' => $term->tid,
-    'name' => t($term->name),
-    'description' => t($term->description),
+    'name' => $term->name,
+    'description' => $term->description,
     'weight' => $term->weight,
     'vid' => $term->vid,
     'ptid' => $ptid,
@@ -982,6 +982,7 @@ function taxonomy_menu_taxonomy_menu_options() {
  * Translate menu links on the fly by using term translations.
  *
  */
+ 
 function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
   if (module_exists('i18ntaxonomy')) {
     // in case of localized terms, use term translation for menu title
@@ -1014,7 +1015,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
           // Should not happen
           watchdog('error', t('Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)));
         }
-        $item['title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
+        $item['link_title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
       }
       else {  // is a vocabulary
         $vocab = taxonomy_vocabulary_load($t['vid']);
@@ -1023,3 +1024,4 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
     }
   }
 }
+
