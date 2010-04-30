@@ -493,27 +493,8 @@ function taxonomy_menu_handler($op, $args = array(), $item = array()) {
  *     'mlid' => if this is filled in then the mlid will be updated
  */
 function _taxonomy_menu_save($item) {
-
-  if (!$item['mlid']) {
-    // Set the weight.  We need to do this becuase the menu system does not order the terms
-    // the same way that the taxonomy system does.
-    // We use a variable to store the value intead of static becuase
-    // using batch API loses the static value per requests.
-    $weight = variable_get('taxonomy_menu_weight', 0);
-    $weight++;
-    variable_set('taxonomy_menu_weight', $weight);
-
-    // Set the default expanded value
-    $expanded = variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE);
-
-    $insert = TRUE;
-  } else {
-    $menu_link = menu_link_load($item['mlid']);
-    $weight = $menu_link['weight'];
-    $expanded = $menu_link['expanded'];
-  }
-
-  //creat the path.
+	$insert = TRUE;
+  //create the path.
   //use url to create he inital path
   //we need to remove the first '/' so menu_link_save will work correctly
   $path = taxonomy_menu_create_path($item['vid'], $item['tid']);
@@ -526,10 +507,10 @@ function _taxonomy_menu_save($item) {
     $plid = variable_get('taxonomy_menu_vocab_parent_'. $item['vid'], NULL);
   }
 
-  // Make sure the title has less then 256 characters
-  if (strlen($item['name']) > 256) {
-    preg_match('/(.{256}.*?)\b/', $item['name'], $matches);
-    $item['name'] = rtrim($matches[1]);
+  // Make sure the path has less then 256 characters
+  if (strlen($path) > 256) {
+    preg_match('/(.{256}.*?)\b/', $path, $matches);
+    $path = rtrim($matches[1]);
   }
 
   $link = array(
@@ -538,9 +519,9 @@ function _taxonomy_menu_save($item) {
     'plid' => $plid,
     'options' => array('attributes' => array('title' => trim($item['description'])
       ? $item['description'] : $item['name'])),
-    'weight' => $weight,
+    'weight' => $item['weight'],
     'module' => 'taxonomy_menu',
-    'expanded' => $expanded,
+    'expanded' => variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE),
     'link_path' => $path,
   );
 
