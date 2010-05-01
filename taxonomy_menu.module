@@ -963,7 +963,7 @@ function taxonomy_menu_taxonomy_menu_options() {
  * Translate menu links on the fly by using term translations.
  *
  */
- 
+
 function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
   if (module_exists('i18ntaxonomy')) {
     // in case of localized terms, use term translation for menu title
@@ -997,6 +997,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
           watchdog('error', t('Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)));
         }
         $item['link_title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
+        $item['title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
       }
       else {  // is a vocabulary
         $vocab = taxonomy_vocabulary_load($t['vid']);
