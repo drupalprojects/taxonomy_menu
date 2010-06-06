@@ -514,11 +514,11 @@ function _taxonomy_menu_save($item) {
   }
 
   $link = array(
-    'link_title' => $item['name'],
+    'link_title' => check_plain($item['name']),
     'menu_name' => $item['menu_name'],
     'plid' => $plid,
     'options' => array('attributes' => array('title' => trim($item['description'])
-      ? $item['description'] : $item['name'])),
+      ? check_plain($item['description']) : check_plain($item['name']))),
     'weight' => $item['weight'],
     'module' => 'taxonomy_menu',
     'expanded' => variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE),
