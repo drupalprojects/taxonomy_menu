@@ -536,7 +536,7 @@ function _taxonomy_menu_save($item) {
   }
 
   // Add updates
-  $link['link_title'] = check_plain($item['name']);
+  $link['link_title'] = $item['name'];
   $link['menu_name'] = $item['menu_name'];
   $link['plid'] = $plid;
   $link['weight'] = $item['weight'];
@@ -571,9 +571,9 @@ function _taxonomy_menu_save($item) {
 
   if (!variable_get('taxonomy_menu_blank_title_'. $item['vid'], FALSE)) {
     $link['options']['attributes']['title'] =
-      trim($item['description']) ?
-      check_plain($item['description']) :
-      check_plain($item['name']);
+      !empty(trim($item['description'])) ?
+      check_plain(strip_tags($item['description'])) :
+      check_plain(strip_tags($item['name']));
   }
 
   //save the menu item
@@ -1006,17 +1006,21 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
           $display_num = " ($num)";
         }
 
-        if ($item['title'] != ($term->name . $display_num)) {
+        // Run the name through check_plain
+        $title = tt('taxonomy:term:'. $term->tid .':name', $term->name . $display_num);
+
+        if ($item['title'] != $term->name . $display_num) {
           // Should not happen
           watchdog('error', t('Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)));
         }
-        $item['link_title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
-        $item['title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
       }
       else {  // is a vocabulary
         $vocab = taxonomy_vocabulary_load($t['vid']);
-        $item['title'] = tt('taxonomy:vocabulary:'. $vocab->vid .':name', $vocab->name);
+        $title = tt('taxonomy:vocabulary:'. $vocab->vid .':name', $vocab->name);
       }
+      // Set the title
+      $item['link_title'] = $title;
+      $item['title'] = $title;
     }
   }
 }
