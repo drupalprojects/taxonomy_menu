@@ -571,9 +571,9 @@ function _taxonomy_menu_save($item) {
 
   if (!variable_get('taxonomy_menu_blank_title_'. $item['vid'], FALSE)) {
     $link['options']['attributes']['title'] =
-      strlen(trim($item['description']))>0 ?
-      check_plain(strip_tags($item['description'])) :
-      check_plain(strip_tags($item['name']));
+      strlen(trim($item['description'])) > 0 ?
+      strip_tags(html_entity_decode($item['description'])) :
+      strip_tags(html_entity_decode($item['name']));
   }
 
   //save the menu item
