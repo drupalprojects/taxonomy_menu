@@ -543,6 +543,7 @@ function _taxonomy_menu_save($item) {
   $link['module'] = 'taxonomy_menu';
   $link['expanded'] = variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE);
   $link['link_path'] = $path;
+  $link['hidden'] = 0;
 
   //FIXME: i18nmenu need to be cleaned up to allow translation from other menu module
   if (module_exists('i18nmenu')) {
