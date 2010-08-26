@@ -573,8 +573,8 @@ function _taxonomy_menu_save($item) {
   if (!variable_get('taxonomy_menu_blank_title_'. $item['vid'], FALSE)) {
     $link['options']['attributes']['title'] =
       strlen(trim($item['description'])) > 0 ?
-      strip_tags(html_entity_decode($item['description'])) :
-      strip_tags(html_entity_decode($item['name']));
+      strip_tags(html_entity_decode($item['description'], ENT_COMPACT, "UTF-8")) :
+      strip_tags(html_entity_decode($item['name'], ENT_COMPACT, "UTF-8"));
   }
 
   //save the menu item
@@ -771,16 +771,17 @@ function _taxonomy_menu_create_item($args = array()) {
  * @param $vid
  * @return boolean
  */
-function _taxonomy_menu_children_has_nodes($tid, $vid) {
-  $children = taxonomy_get_children($tid, $vid);
-  foreach ($children as $tid => $term) {
-    if (_taxonomy_menu_term_count($tid) > 0) {
-      return _taxonomy_menu_children_has_nodes($tid, $vid);
+function _taxonomy_menu_children_has_nodes($tid, $vid, $has_nodes = FALSE) {
+  if (!$has_nodes) {
+    $children = taxonomy_get_children($tid, $vid);
+    foreach ($children as $tid => $term) {
+      if (_taxonomy_menu_term_count($tid) > 0) {
+        return _taxonomy_menu_children_has_nodes($tid, $vid, TRUE);
+      }
     }
   }
-  return TRUE;
+  return $has_nodes;
 }
-
 /**
  * Helper function for insert and update hooks
  * @param $item
@@ -795,7 +796,7 @@ function _taxonomy_menu_item($item) {
     //if hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
     if ($num == 0 &&
         variable_get('taxonomy_menu_hide_empty_terms_'. $item['vid'], FALSE) &&
-        _taxonomy_menu_children_has_nodes($item['tid'], $item['vid'])) {
+        !_taxonomy_menu_children_has_nodes($item['tid'], $item['vid'])) {
 
         $item['remove'] = TRUE;
         return $item;
@@ -995,7 +996,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
         //if hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
         if ($num == 0 &&
           variable_get('taxonomy_menu_hide_empty_terms_'. $t['vid'], FALSE) &&
-          _taxonomy_menu_children_has_nodes($t['tid'], $t['vid'])) {
+          !_taxonomy_menu_children_has_nodes($t['tid'], $t['vid'])) {
           $display_num = '';
         }
         // if display number is selected and $num > 0 then change the title
