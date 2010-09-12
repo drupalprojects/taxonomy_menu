@@ -573,8 +573,8 @@ function _taxonomy_menu_save($item) {
   if (!variable_get('taxonomy_menu_blank_title_'. $item['vid'], FALSE)) {
     $link['options']['attributes']['title'] =
       strlen(trim($item['description'])) > 0 ?
-      strip_tags(html_entity_decode($item['description'], ENT_COMPACT, "UTF-8")) :
-      strip_tags(html_entity_decode($item['name'], ENT_COMPACT, "UTF-8"));
+      strip_tags(html_entity_decode($item['description'], ENT_COMPAT, "UTF-8")) :
+      strip_tags(html_entity_decode($item['name'], ENT_COMPAT, "UTF-8"));
   }
 
   //save the menu item
