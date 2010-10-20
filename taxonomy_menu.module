@@ -566,7 +566,7 @@ function _taxonomy_menu_save($item) {
   }
 
   //if remove is true then set hidden to 1
-  if ($item['remove']) {
+  if (!empty($item['remove'])) {
     $link['hidden'] = 1;
   }
 
