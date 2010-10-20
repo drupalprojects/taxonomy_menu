@@ -32,11 +32,15 @@ function taxonomy_menu_hierarchy_path_hierarchy($vid, $tid) {
   //get the parents of the term
   $parents = taxonomy_get_parents_all($tid);
   //cycle through the parents and add them as an item on the menu
-  foreach ($parents as $parent) {
-    $path_tids = '/'. $parent->tid . $path_tids; 
+  if (!empty($parents)) {
+    $path_tids = '';
+    foreach ($parents as $parent) {
+      $path_tids = '/'. $parent->tid . $path_tids;
+    }
+    $path .= $path_tids;
   }
 
-  return $path . $path_tids;
+  return $path;
 }
 
 /**
