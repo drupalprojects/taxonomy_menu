@@ -539,7 +539,7 @@ function _taxonomy_menu_save($item) {
   $link['link_title'] = $item['name'];
   $link['menu_name'] = $item['menu_name'];
   $link['plid'] = $plid;
-  $link['weight'] = $item['weight'];
+  $link['weight'] = $item['weight'] - 50;
   $link['module'] = 'taxonomy_menu';
   $link['expanded'] = variable_get('taxonomy_menu_expanded_'. $item['vid'], TRUE);
   $link['link_path'] = $path;
