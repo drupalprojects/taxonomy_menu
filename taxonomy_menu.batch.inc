@@ -36,7 +36,12 @@
  *   fails.
  */
 function _taxonomy_menu_insert_link_items_batch($vid) {
-  $terms = taxonomy_get_tree($vid);
+  $depth_limit = (integer) variable_get('taxonomy_menu_depth_limit_'. $vid, 0);
+
+  // Make sure we have a valid value for $depth_limit.
+  if ($depth_limit < 1) { $depth_limit = NULL; }
+
+  $terms = taxonomy_get_tree($vid, 0, -1, $depth_limit);
   $menu_name = variable_get('taxonomy_menu_vocab_menu_'. $vid, FALSE);
 
   $batch = array(

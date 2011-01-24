@@ -451,7 +451,6 @@ function _taxonomy_menu_nodeapi_helper($op, $terms = array()) {
  *     'mlid' => Menu ID
  */
 function taxonomy_menu_handler($op, $args = array(), $item = array()) {
-
   // get the initial $item
   if (empty($item)) {
     $item = _taxonomy_menu_create_item($args);
@@ -466,6 +465,11 @@ function taxonomy_menu_handler($op, $args = array(), $item = array()) {
 
   // update the menu and return the mlid if the remove element is not true
   if ($op != 'delete') {
+    $depth_limit = (integer) variable_get('taxonomy_menu_depth_limit_'. $args['term']->vid, 0);
+    $term_parents = taxonomy_get_parents_all($args['term']->tid);
+
+    if ($depth_limit && count($term_parents) > $depth_limit) { return; }
+
     return _taxonomy_menu_save($item);
   }
 }
@@ -966,6 +970,14 @@ function taxonomy_menu_taxonomy_menu_options() {
     '#title' => t("Use 'all' at the end of URL"),
     'default' => FALSE,
     '#description' => t('This changes tid+tid+tid to "All" in term when <em>Display descendants</em> has been selected.<br />Only used if <em>Menu path type</em> is "Default path".<br />Works with default taxonomy page.'),
+  );
+
+  $options['depth_limit'] = array(
+    '#title' => t('Depth limit'),
+    '#type' => 'textfield',
+    '#description' => t('Limit how many levels of the taxonomy tree to process. Useful if you have a very large tree of taxonomy terms, and only want to provide a menu for the first two levels. 0 for no limit.'),
+    '#size' => 5,
+    'default' => 0,
   );
 
   return $options;
