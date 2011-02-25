@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @author Jonathan Chaffer   <jchaffer@structureinteractive.com>
