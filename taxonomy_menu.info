@@ -1,4 +1,3 @@
-; $Id$
 core          = "6.x"
 dependency    = taxonomy
 description   = "Adds links to taxonomy terms to the global navigation menu."
