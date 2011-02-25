@@ -1,4 +1,3 @@
-# $Id$
 #
 # LANGUAGE translation of Drupal (taxonomy_menu_path_custom)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
