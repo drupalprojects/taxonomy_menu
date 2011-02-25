@@ -1,6 +1,5 @@
 <?php
 /**
- * $Id$
  * @file taxonomy_menu.inc
  * @author Jonathan Chaffer   <jchaffer@structureinteractive.com>
  * @author Bruno Massa        <http://drupal.org/user/67164>

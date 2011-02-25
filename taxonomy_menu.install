@@ -1,6 +1,5 @@
 <?php
 /**
- * $Id$
  * @file taxonomy_menu.install
  * Install and uninstall all required databases.
  * Also do incremental database updates.

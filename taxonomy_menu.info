@@ -1,4 +1,3 @@
-; $Id$
 core          = "5.x"
 name          = "Taxonomy Menu"
 dependencies  = taxonomy
