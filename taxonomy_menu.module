@@ -998,7 +998,13 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
       $t = _taxonomy_menu_get_item($item['mlid']);
       if ($t['tid'] > 0) {  // this is a term
         $term = taxonomy_get_term($t['tid']);
-
+        if (!$term) {
+          $info = array('tid' => $t['tid'], 'vid' => $t['vid'], 'mlid' => $item['mlid']);
+          // menu items from taxonomy menu module can not be deleted manually
+          taxonomy_menu_taxonomy_menu_delete($info);
+          watchdog('error', 'You deleted a term, but not the corresponding menu item @menuitem. The menu item was deleted.', array('@menuitem' => $item['title']));
+          return;
+        }
         $display_num = '';
         $num = _taxonomy_menu_term_count($t['tid']);
 
